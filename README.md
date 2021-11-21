@@ -38,7 +38,7 @@ Both in the root folder, to run one of the methods. See examples of how to run e
 Our methods follow PBBS [specifications](https://www.cs.cmu.edu/~pbbs/benchmarks.html), including [inputs](https://www.cs.cmu.edu/~pbbs/inputs.html).
 
 ### Radix Sort
-Radix Sort is our implementation for the (Integer Sort)(https://www.cs.cmu.edu/~pbbs/benchmarks/integerSort.html). So, run
+Radix Sort is our implementation for the [Integer Sort](https://www.cs.cmu.edu/~pbbs/benchmarks/integerSort.html). So, run
 ```bash
 $ git escript pbbs RadixSort my/file/location.txt
 ```
