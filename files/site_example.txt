@@ -1,0 +1,11 @@
+
+sequenceStringIntPair
+this 22
+is    444
+a 12345
+sequence 11
+of -22
+nine 14
+string 1
+integer 16
+pairs 0
