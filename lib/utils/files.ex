@@ -1,4 +1,6 @@
 defmodule Utils.Files do
+  # This works but will break for some invalid file formats, so need to be corrected
+  # And this method is very big and ugly, it needs to be refactored
   def get_pbbs_sequence(file_name) do
     {status, file_content} = File.read(file_name)
     if status == :ok do

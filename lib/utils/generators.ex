@@ -10,12 +10,4 @@ defmodule Utils.Generators do
       Enum.random(0..n)
     end)
   end
-
-  def random_sequence("float", total) do
-    # todo
-  end
-
-  def random_sequence("float", limit, total) do
-    # todo
-  end
 end

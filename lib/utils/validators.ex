@@ -1,13 +1,8 @@
 defmodule Utils.Validators do
-  def is_string_a_number(string) do
-    case Integer.parse(string) do
+  def is_number(x) when is_binary(x) do
+    case Integer.parse(x) do
       {_, ""} -> true
       _ -> false
     end
-  end
-
-  def is_valid_pbbs_file(input) do
-    # todo
-    true
   end
 end

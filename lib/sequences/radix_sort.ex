@@ -2,7 +2,7 @@
 
 defmodule Sequences.RadixSort do
   def radix_sort([n]) when is_binary(n) do
-    if Utils.Validators.is_string_a_number(n) do
+    if Utils.Validators.is_number(n) do
       radix_sort(String.to_integer(n))
     else
       list = Utils.Files.get_pbbs_sequence(n)
@@ -20,7 +20,7 @@ defmodule Sequences.RadixSort do
   end
 
   def radix_sort([m, n]) when is_binary(m) and is_binary(n) do
-    if Utils.Validators.is_string_a_number(m) and Utils.Validators.is_string_a_number(n) do
+    if Utils.Validators.is_number(m) and Utils.Validators.is_number(n) do
       radix_sort(String.to_integer(m), String.to_integer(n))
     else
       display_error_message()
