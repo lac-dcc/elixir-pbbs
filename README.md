@@ -46,7 +46,7 @@ Where my/file/location.txt is a file containing a sequence of integers in [PBBS 
 ```bash
 $ git escript pbbs RadixSort m n
 ```
-To sort n values in a range [0, m]. m it'optional, if not provided, m = n.
+To sort n values in a range [0, m] randomly generated. m it'optional, if not provided, m = n.
 
 ### Sample Sort
 ```bash
