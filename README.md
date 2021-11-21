@@ -40,11 +40,11 @@ Our methods follow PBBS [specifications](https://www.cs.cmu.edu/~pbbs/benchmarks
 ### Radix Sort
 Radix Sort is our implementation for the [Integer Sort](https://www.cs.cmu.edu/~pbbs/benchmarks/integerSort.html). So, run
 ```bash
-$ git escript pbbs RadixSort my/file/location.txt
+$ escript pbbs RadixSort my/file/location.txt
 ```
 Where my/file/location.txt is a file containing a sequence of integers in [PBBS format](https://www.cs.cmu.edu/~pbbs/benchmarks/sequenceIO.html) or
 ```bash
-$ git escript pbbs RadixSort m n
+$ escript pbbs RadixSort m n
 ```
 To sort n values in a range [0, m] randomly generated. m it'optional, if not provided, m = n.
 
