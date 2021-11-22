@@ -1,40 +1,92 @@
 # Description: https://www.cs.cmu.edu/~pbbs/benchmarks/integerSort.html
 
 defmodule Sequences.RadixSort do
-  def radix_sort([n]) when is_binary(n) do
+  @p 10 # number of processes, need to be moved to input
+
+  def run([n]) when is_binary(n) do
     if Utils.Validators.is_number(n) do
-      radix_sort(String.to_integer(n))
+      run(String.to_integer(n))
     else
       list = Utils.Files.get_pbbs_sequence(n)
       if list != [] do
-        sort(list)
+        radix_sort(list)
       else
         display_error_message()
       end
     end
   end
 
-  def radix_sort(n) when is_integer(n) do
+  def run(n) when is_integer(n) do
     list = Utils.Generators.random_sequence(n)
-    sort(list)
+    radix_sort(list)
   end
 
-  def radix_sort([m, n]) when is_binary(m) and is_binary(n) do
+  def run([m, n]) when is_binary(m) and is_binary(n) do
     if Utils.Validators.is_number(m) and Utils.Validators.is_number(n) do
-      radix_sort(String.to_integer(m), String.to_integer(n))
+      run(String.to_integer(m), String.to_integer(n))
     else
       display_error_message()
     end
   end
 
-  def radix_sort(m, n) when is_integer(m) and is_integer(n) do
+  def run(m, n) when is_integer(m) and is_integer(n) do
     list = Utils.Generators.random_sequence(m, n)
-    sort(list)
+    radix_sort(list)
   end
 
-  defp sort(list) when is_list(list) do
-    # work in progress
-    IO.inspect(list)
+  defp radix_sort(list), do: radix_sort(list, 10)
+
+  defp radix_sort([], _), do: []
+
+  defp radix_sort(list, base) do
+    max = abs(Utils.Lists.max(list))
+    sorted = radix_sort(list, base, max, 1, @p)
+    IO.puts("\nOriginal sequence: ")
+    IO.inspect(list, limit: :infinity)
+    IO.puts("\nSorted sequence: ")
+    IO.inspect(sorted, limit: :infinity)
+    sorted
+  end
+
+  defp radix_sort(list, _, max, exp, _) when max < exp, do: list
+
+  defp radix_sort(list, base, max, exp, depth) do
+    buckets = get_buckets(list, base, exp)
+    sorted = get_list_from_buckets(buckets)
+    # Concurrency (work in progress):
+    # split my list into 2, call 2 processes link to sort each side recursively and join at the end
+    radix_sort(sorted, base, max, exp*base, depth - 1)
+  end
+
+  defp get_empty_buckets(base), do: 0..base-1 |> Enum.map(fn _ -> [] end)
+
+  defp get_buckets(list, base, exp) do
+    get_buckets(list, base, get_empty_buckets(base), 0, exp)
+  end
+
+  defp get_buckets([], _, buckets, _, _), do: buckets
+
+  defp get_buckets([element | remaining], base, buckets, index, exp) do
+    position = get_position(abs(element), base, exp)
+    left = Enum.slice(buckets, 0, position)
+    right = Enum.slice(buckets, position + 1, base - 1)
+    new_buckets = left ++ [Enum.at(buckets, position) ++ [element]] ++ right
+    get_buckets(remaining, base, new_buckets, index + 1, exp)
+  end
+
+  defp get_position(element, base, exp) when exp <= 1, do: rem(element, base)
+
+  defp get_position(element, base, exp) do
+    quotient = div(element, base)
+    get_position(quotient, base, exp/base)
+  end
+
+  defp get_list_from_buckets(buckets) do
+    almost_sorted = List.flatten(buckets)
+
+    # Treating negative numbers:
+    {negatives, positives} = Enum.split_with(almost_sorted, fn x -> x < 0 end)
+    Enum.reverse(negatives, positives)
   end
 
   defp display_error_message() do
