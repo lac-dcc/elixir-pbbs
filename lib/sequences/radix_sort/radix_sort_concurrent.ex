@@ -6,126 +6,100 @@ defmodule Sequences.RadixSort.Concurrent do
     if list != [] and Utils.Validators.is_number(p) do
       IO.puts("Original sequence: ")
       Utils.Lists.print(list)
-      radix_sort_concurrent(list, String.to_integer(p))
+      radix_sort_concurrent(list)
     else
       display_error_message()
     end
   end
 
-  defp radix_sort_concurrent(list, p) do
-    parts = Utils.Lists.chunk_uniformly(list, p)
+  defp radix_sort_concurrent(list) do
+    # Getting the number of digits of max element in list
+    max = abs(Utils.Lists.max(list))
+    max_length = length(Integer.digits(max))
+
+    {elapsed_time, sorted} =
+      :timer.tc(fn -> List.flatten(radix_sort_concurrent(list, 10, 0, max_length)) end)
+
+    IO.puts("\nSorted sequence - Concurrent: ")
+    Utils.Lists.print(sorted)
+    IO.puts("Elapsed time: #{elapsed_time} ms\n")
+    sorted
+  end
+
+  defp radix_sort_concurrent(list, _, digit, rank) when digit == rank, do: list
+
+  defp radix_sort_concurrent(list, base, digit, rank) do
+    string_list =
+      Enum.map(list, fn item -> String.pad_leading(Integer.to_string(item), rank, "0") end)
+
+    buckets = get_buckets(string_list, base, digit)
+
     parent = self()
 
-    refs =
-      Enum.map(parts, fn elements ->
-        ref = make_ref()
+    ## concurrent
+    # refs =
+    #   Enum.map(buckets, fn bucket ->
+    #     ref = make_ref()
 
-        spawn_link(fn ->
-          send(parent, {:sort, ref, [elements, 1]})
-        end)
+    #     spawn_link(fn ->
+    #       new_list = get_list_from_buckets(bucket)
 
-        ref
-      end)
+    #       send(
+    #         parent,
+    #         {:sort, ref, radix_sort_concurrent(new_list, base, digit + 1, rank)}
+    #       )
+    #     end)
 
-    sorted_by_digit =
-      Enum.map(refs, fn _ ->
-        receive do
-          {:sort, _, [list, digit]} -> radix_sort(list, digit)
-        end
-      end)
+    #     ref
+    #   end)
 
-    Enum.each(0..(length(sorted_by_digit) - 1), fn i ->
-      send(parent, {:rearrange, Enum.at(refs, i), [refs, Enum.at(sorted_by_digit, i)]})
-    end)
+    ## sequential:
+    # sorted =
+    #   Enum.map(buckets, fn bucket ->
+    #     new_list = get_list_from_buckets(bucket)
+    #     radix_sort_concurrent(new_list, base, digit + 1, rank)
+    #   end)
 
+    ## concurrent 1:
+    # sorted =
+    #   Enum.map(refs, fn _ ->
+    #     receive do
+    #       {:sort, ref, [list, base, digit, rank]} ->
+    #         radix_sort_concurrent(list, base, digit, rank)
+    #     end
+    #   end)
+
+    sorted = []
     # Enum.map(refs, fn _ ->
     #   receive do
-    #     {:sort, ref, [list, digit]} ->
-    #       send(parent, {:rearrange, ref, [radix_sort(list, digit)]})
+    #     {:sort, ref, list} -> list
     #   end
     # end)
 
-    rearranged_lists =
-      Enum.map(refs, fn _ ->
-        receive do
-          {:rearrange, ref, [refs, list]} -> rearrange(list, ref, refs)
-        end
-      end)
-
-    Utils.Lists.print(sorted_by_digit)
-  end
-
-  def rearrange(list, ref, refs) do
-    # IO.inspect(refs)
-    IO.inspect(ref)
-    IO.inspect(list)
-  end
-
-  def radix_sort(list, digit) do
-    buckets = get_buckets(list, 10, digit)
-    sorted_by_digit = get_list_from_buckets(buckets)
-    sorted_by_digit
-  end
-
-  defp get_list_from_buckets(buckets) do
-    almost_sorted = List.flatten(buckets)
-
-    # Treating negative numbers:
-    {negatives, positives} = Enum.split_with(almost_sorted, fn x -> x < 0 end)
-    Enum.reverse(negatives, positives)
+    # IO.puts("dale")
+    # Utils.Lists.print(sorted)
+    sorted
   end
 
   defp get_empty_buckets(base), do: 0..(base - 1) |> Enum.map(fn _ -> [] end)
 
-  defp get_buckets([], _, buckets, _, _), do: buckets
-
-  defp get_buckets(list, base, exp) do
-    get_buckets(list, base, get_empty_buckets(base), 0, exp)
+  defp get_buckets(list, base, digit) do
+    get_buckets(list, get_empty_buckets(base), base, digit)
   end
 
-  defp get_buckets([element | remaining], base, buckets, index, exp) do
-    position = get_position(abs(element), base, exp)
+  defp get_buckets([], buckets, _, _), do: buckets
+
+  defp get_buckets([element | remaining], buckets, base, digit) do
+    position = String.to_integer(String.at(element, digit))
     left = Enum.slice(buckets, 0, position)
     right = Enum.slice(buckets, position + 1, base - 1)
     new_buckets = left ++ [Enum.at(buckets, position) ++ [element]] ++ right
-    get_buckets(remaining, base, new_buckets, index + 1, exp)
+    get_buckets(remaining, new_buckets, base, digit)
   end
 
-  defp get_position(element, base, exp) when exp <= 1, do: rem(element, base)
-
-  defp get_position(element, base, exp) do
-    quotient = div(element, base)
-    get_position(quotient, base, exp / base)
-  end
-
-  def master_listener() do
-    IO.puts("MASTER ESCUTANDO")
-
-    receive do
-      {:ok, result} ->
-        IO.puts("bom")
-
-      _ ->
-        IO.puts("ruim")
-        # receiver_loop(results, results_expected)
-    end
-  end
-
-  def worker_listener() do
-    IO.puts("WORKER ESCUTANDO")
-
-    receive do
-      {master_pid, {:sort, [list, digit]}} ->
-        send(master_pid, sort(list, digit))
-
-      _ ->
-        :error
-    end
-  end
-
-  def sort(list, digit) do
-    IO.puts("sort")
-    {:ok, radix_sort(list, digit)}
+  defp get_list_from_buckets(buckets) do
+    List.flatten(buckets)
+    |> Enum.map(fn item -> String.to_integer(item) end)
   end
 
   defp display_error_message() do
