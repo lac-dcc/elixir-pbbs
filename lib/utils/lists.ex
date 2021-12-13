@@ -33,7 +33,8 @@ defmodule Utils.Lists do
   defp reverse([], r), do: r
   defp reverse([h | t], r), do: reverse(t, [h | r])
 
-  def print(list), do: IO.inspect(list, charlists: :as_lists, limit: :infinity)
+  def print(list), do: IO.inspect(list, charlists: :as_lists)
+  def print(list, true), do: IO.inspect(list, charlists: :as_lists, limit: :infinity)
 
   def chunk_uniformly(list, number_of_chunks) do
     len = length(list)

@@ -21,8 +21,8 @@ defmodule Sequences.RadixSort.Concurrent do
       :timer.tc(fn -> List.flatten(radix_sort_concurrent(list, 10, 0, max_length)) end)
 
     IO.puts("\nSorted sequence - Concurrent: ")
-    Utils.Lists.print(sorted)
-    IO.puts("Elapsed time: #{elapsed_time} ms\n")
+    Utils.Lists.print(sorted, true)
+    IO.puts("Elapsed time: #{elapsed_time/1000000} s\n")
     sorted
   end
 
@@ -32,53 +32,30 @@ defmodule Sequences.RadixSort.Concurrent do
     string_list =
       Enum.map(list, fn item -> String.pad_leading(Integer.to_string(item), rank, "0") end)
 
-    buckets = get_buckets(string_list, base, digit)
+    empty_buckets = List.to_tuple(for _ <- 0..base-1, do: [])
+    buckets = Enum.reduce(string_list, empty_buckets, fn x,acc ->
+      i = String.to_integer(String.at(x, digit))
+      put_elem(acc, i, [x | elem(acc, i)])
+    end)
 
     parent = self()
 
-    ## concurrent
-    # refs =
-    #   Enum.map(buckets, fn bucket ->
-    #     ref = make_ref()
+    # concurrent
+    tasks =
+      Enum.map(Tuple.to_list(buckets), fn bucket ->
+        Task.async(fn ->
+          new_list = get_list_from_buckets(bucket)
+          radix_sort_concurrent(new_list, base, digit + 1, rank)
+        end)
+      end)
+    Task.await_many(tasks, :infinity)
 
-    #     spawn_link(fn ->
-    #       new_list = get_list_from_buckets(bucket)
-
-    #       send(
-    #         parent,
-    #         {:sort, ref, radix_sort_concurrent(new_list, base, digit + 1, rank)}
-    #       )
-    #     end)
-
-    #     ref
-    #   end)
 
     ## sequential:
-    # sorted =
-    #   Enum.map(buckets, fn bucket ->
-    #     new_list = get_list_from_buckets(bucket)
-    #     radix_sort_concurrent(new_list, base, digit + 1, rank)
-    #   end)
-
-    ## concurrent 1:
-    # sorted =
-    #   Enum.map(refs, fn _ ->
-    #     receive do
-    #       {:sort, ref, [list, base, digit, rank]} ->
-    #         radix_sort_concurrent(list, base, digit, rank)
-    #     end
-    #   end)
-
-    sorted = []
-    # Enum.map(refs, fn _ ->
-    #   receive do
-    #     {:sort, ref, list} -> list
-    #   end
+    # Enum.map(Tuple.to_list(buckets), fn bucket ->
+    #   new_list = get_list_from_buckets(bucket)
+    #   radix_sort_concurrent(new_list, base, digit + 1, rank)
     # end)
-
-    # IO.puts("dale")
-    # Utils.Lists.print(sorted)
-    sorted
   end
 
   defp get_empty_buckets(base), do: 0..(base - 1) |> Enum.map(fn _ -> [] end)
