@@ -40,18 +40,29 @@ Our methods follow PBBS [specifications](https://www.cs.cmu.edu/~pbbs/benchmarks
 ### Radix Sort
 Radix Sort is our implementation for the [Integer Sort](https://www.cs.cmu.edu/~pbbs/benchmarks/integerSort.html). So, run
 ```bash
-$ escript pbbs RadixSort my/file/location.txt
+$ escript pbbs RadixSort p my/file/location.txt
 ```
 Where my/file/location.txt is a file containing a sequence of integers in [PBBS format](https://www.cs.cmu.edu/~pbbs/benchmarks/sequenceIO.html) or
 ```bash
-$ escript pbbs RadixSort m n
+$ escript pbbs RadixSort p [m] n
 ```
 To sort n values in a range [0, m] randomly generated. m it'optional, if not provided, m = n.
 
+For both cases, p is the number of workers.
+
 ### Sample Sort
+Sample Sort is our implementation for the [Comparison Sort](https://www.cs.cmu.edu/~pbbs/benchmarks/comparisonSort.html). So, run
 ```bash
-$ To do
-````
+$ escript pbbs SampleSort p my/file/location.txt
+```
+Where my/file/location.txt is a file containing a sequence of integers in [PBBS format](https://www.cs.cmu.edu/~pbbs/benchmarks/sequenceIO.html) or
+```bash
+$ escript pbbs SampleSort p ll [m] n
+```
+To sort n values in a range [0, m] randomly generated. m it'optional, if not provided, m = n.
+
+For both cases, p is the number of workers and ll it's the lower limit used by the algoritm.
+
 
 ### Suffix Array
 ```bash
