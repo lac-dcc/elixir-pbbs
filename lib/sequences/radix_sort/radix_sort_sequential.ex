@@ -66,7 +66,6 @@ defmodule Sequences.RadixSort.Sequential do
   end
 
   defp display_error_message() do
-    # Doubt: Did I need to check the number of threads?
     IO.puts("\nSyntax: ")
     IO.puts("escripts pbbs RadixSort p [<m>] n")
     IO.puts("   to sort n values in a range [0, m], if m not given, m = n")

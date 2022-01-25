@@ -7,7 +7,7 @@ defmodule PBBS do
 
       case method_name do
         "RadixSort" -> Sequences.RadixSort.Concurrent.run(method_args)
-        "SampleSort" -> Sequences.SampleSort.sample_sort(method_args)
+        "SampleSort" -> Sequences.SampleSort.run(method_args)
         _ -> IO.puts(@invalid_input_string <> "algorithm name is invalid.")
       end
     else
