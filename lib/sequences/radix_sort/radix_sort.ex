@@ -26,7 +26,7 @@ defmodule Sequences.RadixSort do
 
     sorted = Enum.map(sorted_string, fn item -> String.to_integer(item) end)
 
-    IO.puts("\nSorted sequence - Concurrent: ")
+    IO.puts("\nSorted sequence: ")
     Utils.Lists.print(sorted)
     IO.puts("Elapsed time: #{elapsed_time / 1_000_000} s\n")
     sorted

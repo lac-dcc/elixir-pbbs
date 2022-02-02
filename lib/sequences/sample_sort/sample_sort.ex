@@ -101,8 +101,6 @@ defmodule Sequences.SampleSort do
     end)
   end
 
-  defp get_empty_buckets(n), do: 1..n |> Enum.map(fn _ -> [] end)
-
   defp get_pivots_from_list(list, _) do
     uniq_list = Enum.uniq(list)
     # need use the processes_number? hmm
