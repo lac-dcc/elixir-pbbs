@@ -12,9 +12,9 @@ declare -a integer_sort_type=(
 
 for i in {1..7}; do
     for type in "${comparison_sort_type[@]}"; do
-        ./build/$type -t double $((10**$i)) comparison_sort/$type/$((10**$i))
+        ./build/$type -t double $((10**$i)) comparison_sort/$type/$((10**$i)).txt
     done
     for type in "${integer_sort_type[@]}"; do
-        ./build/$type -t int $((10**$i)) integer_sort/$type/$((10**$i))
+        ./build/$type -t int $((10**$i)) integer_sort/$type/$((10**$i)).txt
     done
 done

@@ -6,7 +6,7 @@ defmodule Sequences.RadixSort do
     list = Utils.Inputs.get_sequence(input)
 
     if list != [] and Utils.Validators.is_number(p) do
-      IO.puts("Original sequence: ")
+      IO.puts("\nOriginal sequence: ")
       Utils.Lists.print(list)
       radix_sort(list)
     else

@@ -9,7 +9,7 @@ defmodule Sequences.SampleSort do
       if list != [] and Utils.Validators.is_number(processes_number) and
            Utils.Validators.is_number(lower_limit) do
         if String.to_integer(processes_number) <= length(list) do
-          IO.puts("Original sequence: ")
+          IO.puts("\nOriginal sequence: ")
           Utils.Lists.print(list)
 
           {elapsed_time, sorted_list} =
