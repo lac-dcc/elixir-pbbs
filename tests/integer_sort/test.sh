@@ -12,8 +12,8 @@ size=0
 mix escript.build
 
 csv_output=$'array_type\tarray_size\tfrequency\tcpu_cores\telapsed_time'
-filename=benchmarkings/integer_sort/data_$(date +'%Y-%m-%d').csv
-# filename=benchmarkings/integer_sort/data.csv
+# filename=benchmarkings/integer_sort/data_$(date +'%Y-%m-%d').csv
+filename=benchmarkings/integer_sort/data.csv
 
 rm $filename
 echo "$csv_output" >> $filename
