@@ -14,7 +14,7 @@ rm $filename
 echo "$csv_output" >> $filename
 
 for type in "${integer_sort_type[@]}"; do
-    for exp in {1..2}; do
+    for exp in {1..7}; do
         cores="0"
         for core in {0..7}; do
             if [ "$core" != "0" ]; then
