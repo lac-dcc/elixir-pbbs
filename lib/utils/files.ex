@@ -8,12 +8,12 @@ defmodule Utils.Files do
       IO.puts("File found locally, trying to get the sequence...")
       get_pbbs_sequence_from_content(file_content)
     else
-      IO.puts("File not found locally, trying to get via HTTP GET request...")
+      # IO.puts("File not found locally, trying to get via HTTP GET request...")
 
       return =
         case HTTPoison.get(file_name) do
           {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-            IO.puts("GET request works!")
+            # IO.puts("GET request works!")
             get_pbbs_sequence_from_content(body)
 
           {:ok, %HTTPoison.Response{status_code: 404}} ->

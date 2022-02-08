@@ -6,8 +6,8 @@ defmodule Sequences.RadixSort do
     list = Utils.Inputs.get_sequence(input)
 
     if list != [] and Utils.Validators.is_number(p) do
-      IO.puts("\nOriginal sequence: ")
-      Utils.Lists.print(list)
+      # IO.puts("\nOriginal sequence: ")
+      # Utils.Lists.print(list)
       radix_sort(list)
     else
       display_error_message()
@@ -26,9 +26,10 @@ defmodule Sequences.RadixSort do
 
     sorted = Enum.map(sorted_string, fn item -> String.to_integer(item) end)
 
-    IO.puts("\nSorted sequence: ")
-    Utils.Lists.print(sorted)
-    IO.puts("Elapsed time: #{elapsed_time / 1_000_000} s\n")
+    # IO.puts("\nSorted sequence: ")
+    # Utils.Lists.print(sorted)
+    # IO.puts("Elapsed time: #{elapsed_time / 1_000_000} s\n")
+    IO.puts(elapsed_time / 1_000_000)
     sorted
   end
 
