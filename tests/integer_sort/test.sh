@@ -22,7 +22,6 @@ for type in "${integer_sort_type[@]}"; do
             fi
             cores_number=$((core+1))
             for round in {1..5}; do
-                echo i+1
                 size=$((10**exp))
                 cmd="taskset -c $cores escript pbbs RadixSort 10 https://monography.s3.us-east-2.amazonaws.com/integer_sort/$type/$size.txt"
                 echo $cmd
