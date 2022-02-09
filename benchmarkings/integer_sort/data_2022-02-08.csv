@@ -1,4 +1,0 @@
-array_type	array_size	frequency	cpu_cores	elapsed_time
-expt_seq	10	1.6GHz	1	0.010453
-expt_seq	10	1.6GHz	1	0.014861
-expt_seq	10	1.6GHz	1	0.014156
