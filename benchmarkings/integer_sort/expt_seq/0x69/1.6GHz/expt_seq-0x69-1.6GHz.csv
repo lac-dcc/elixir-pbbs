@@ -1,0 +1,7 @@
+array_type	config	frequency	array_size	elapsed_time
+expt_seq	0x69	1.6GHz	10	0.002868
+expt_seq	0x69	1.6GHz	100	0.002466
+expt_seq	0x69	1.6GHz	1000	0.004352
+expt_seq	0x69	1.6GHz	10000	0.016605
+expt_seq	0x69	1.6GHz	100000	0.148388
+expt_seq	0x69	1.6GHz	1000000	1.770194
