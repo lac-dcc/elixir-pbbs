@@ -6,8 +6,10 @@ size=0
 mix escript.build
 
 csv_output=$'array_type\tarray_size\tlower_limit\tfrequency\tconfig\telapsed_time'
-filename=benchmarkings/comparison_sort/data_$(date +'%Y-%m-%d').csv
+dir=benchmarkings/comparison_sort
+filename=$dir/data_$(date +'%Y-%m-%d').csv
 
+mkdir -p $dir
 rm -f $filename
 echo "$csv_output" >> $filename
 
