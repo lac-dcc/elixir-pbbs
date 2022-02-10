@@ -19,15 +19,15 @@ for type in $integer_sort_type; do
             freq_cmd="sudo cpufreq-set -c 4 -f $freq"
             echo $freq_cmd
             for config in $configs; do
-                for round in {1..5}; do
-                    size=$((10**exp))
-                    # cmd="taskset $config escript pbbs RadixSort 10 https://monography.s3.us-east-2.amazonaws.com/integer_sort/$type/$size.txt"
-                    cmd="taskset $config escript pbbs RadixSort 10 tests/integer_sort/$type/$size.txt"
-                    echo $cmd
-                    result=$($cmd)
-                    echo $result
-                    echo -e "$type\t$size\t$freq\t$config\t$result" >> $filename
-                done
+                # for round in {1..5}; do
+                size=$((10**exp))
+                # cmd="taskset $config escript pbbs RadixSort 10 https://monography.s3.us-east-2.amazonaws.com/integer_sort/$type/$size.txt"
+                cmd="taskset $config escript pbbs RadixSort 10 tests/integer_sort/$type/$size.txt"
+                echo $cmd
+                result=$($cmd)
+                echo $result
+                echo -e "$type\t$size\t$freq\t$config\t$result" >> $filename
+                # done
             done
         done
     done
