@@ -5,7 +5,7 @@ defmodule Utils.Files do
     {status, file_content} = File.read(file_name)
 
     if status == :ok do
-      IO.puts("File found locally, trying to get the sequence...")
+      # IO.puts("File found locally, trying to get the sequence...")
       get_pbbs_sequence_from_content(file_content)
     else
       # IO.puts("File not found locally, trying to get via HTTP GET request...")
@@ -68,7 +68,7 @@ defmodule Utils.Files do
         case type do
           "Int" -> Enum.map(elements, fn x -> String.to_integer(x) end)
           "Double" -> Enum.map(elements, fn x -> String.to_float(x) end)
-          "String" -> elements
+          "Char" -> elements
           _ -> []
         end
       end

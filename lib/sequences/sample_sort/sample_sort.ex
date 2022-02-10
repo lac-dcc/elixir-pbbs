@@ -9,8 +9,8 @@ defmodule Sequences.SampleSort do
       if list != [] and Utils.Validators.is_number(processes_number) and
            Utils.Validators.is_number(lower_limit) do
         if String.to_integer(processes_number) <= length(list) do
-          IO.puts("\nOriginal sequence: ")
-          Utils.Lists.print(list)
+          # IO.puts("\nOriginal sequence: ")
+          # Utils.Lists.print(list)
 
           {elapsed_time, sorted_list} =
             :timer.tc(fn ->
@@ -21,9 +21,10 @@ defmodule Sequences.SampleSort do
               )
             end)
 
-          IO.puts("Sorted sequence: ")
-          Utils.Lists.print(sorted_list)
-          IO.puts("Elapsed time: #{elapsed_time / 1_000_000} s\n")
+          # IO.puts("Sorted sequence: ")
+          # Utils.Lists.print(sorted_list)
+          # IO.puts("Elapsed time: #{elapsed_time / 1_000_000} s\n")
+          IO.puts(elapsed_time / 1_000_000)
         else
           IO.puts("p must be smaller than the list size")
         end
@@ -119,11 +120,11 @@ defmodule Sequences.SampleSort do
 
   defp display_error_message() do
     IO.puts("\nSyntax: ")
-    IO.puts("escripts pbbs SampleSort p ll [<m>] n")
+    IO.puts("escript pbbs SampleSort p ll [<m>] n")
     IO.puts("   to sort n values in a range [0, m], if m not given, m = n")
     IO.puts("   p: max number of processes")
     IO.puts("   ll: lower limit. Sample sort will be applied up to arrays of size > ll OR\n")
-    IO.puts("escripts pbbs SampleSort p ll  IN")
+    IO.puts("escript pbbs SampleSort p ll  IN")
     IO.puts("   IN: input file with numbers to sort (in the PBBS format).")
     IO.puts("   p: max number of processes")
     IO.puts("   ll: lower limit. Sample sort will be applied up to arrays of size > ll")

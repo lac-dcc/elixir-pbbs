@@ -19,7 +19,8 @@ for type in $integer_sort_type; do
             for config in $configs; do
                 for round in {1..5}; do
                     size=$((10**exp))
-                    cmd="taskset $config escript pbbs RadixSort 10 https://monography.s3.us-east-2.amazonaws.com/integer_sort/$type/$size.txt"
+                    # cmd="taskset $config escript pbbs RadixSort 10 https://monography.s3.us-east-2.amazonaws.com/integer_sort/$type/$size.txt"
+                    cmd="taskset $config escript pbbs RadixSort 10 tests/integer_sort/$type/$size.txt"
                     echo $cmd
                     result=$($cmd)
                     echo $result
