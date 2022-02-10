@@ -19,7 +19,7 @@ for type in $comparison_sort_type; do
             echo "$header" >> $filename
             freq_cmd="sudo cpufreq-set -c 4 -f $freq"
             echo $freq_cmd
-            for exp in {1..6}; do
+            for exp in {1..5}; do
                 size=$((10**exp))
                 lower_limit=1
                 if [ $size = 1000000 ]; then
@@ -30,14 +30,14 @@ for type in $comparison_sort_type; do
                     if [ $lower_limit -gt $size ]; then
                         break
                     fi
-                    # for round in {1..5}; do
-                    # cmd="taskset $config escript pbbs SampleSort 10 $lower_limit https://monography.s3.us-east-2.amazonaws.com/comparison_sort/$type/$size.txt"
-                    cmd="taskset $config escript pbbs SampleSort 10 $lower_limit tests/integer_sort/$type/$size.txt"
-                    echo $cmd
-                    result=$($cmd)
-                    echo $result
-                    echo -e "$type\t$config\t$freq\t$size\t$lower_limit\t$result" >> $filename
-                    # done
+                    for round in {1..5}; do
+                        # cmd="taskset $config escript pbbs SampleSort 10 $lower_limit https://monography.s3.us-east-2.amazonaws.com/comparison_sort/$type/$size.txt"
+                        cmd="taskset $config escript pbbs SampleSort 10 $lower_limit tests/integer_sort/$type/$size.txt"
+                        echo $cmd
+                        result=$($cmd)
+                        echo $result
+                        echo -e "$type\t$config\t$freq\t$size\t$lower_limit\t$result" >> $filename
+                    done
                 done
             done
         done
