@@ -1,6 +1,0 @@
-array_type	config	frequency	array_size	elapsed_time
-expt_seq	0xf0	1.6GHz	10	0.002585
-expt_seq	0xf0	1.6GHz	100	0.002936
-expt_seq	0xf0	1.6GHz	1000	0.00438
-expt_seq	0xf0	1.6GHz	10000	0.015834
-expt_seq	0xf0	1.6GHz	100000	0.169289
