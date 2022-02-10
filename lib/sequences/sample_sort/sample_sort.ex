@@ -25,6 +25,7 @@ defmodule Sequences.SampleSort do
           # Utils.Lists.print(sorted_list)
           # IO.puts("Elapsed time: #{elapsed_time / 1_000_000} s\n")
           IO.puts(elapsed_time / 1_000_000)
+          sorted_list
         else
           IO.puts("p must be smaller than the list size")
         end
