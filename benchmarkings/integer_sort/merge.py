@@ -34,15 +34,7 @@ for i in range(0, len(data_lines), 5):
     new_row[4] = sum/5
     rows.append(new_row)
 
-with open("data_processed.csv", 'w') as csvfile:
-    csvwriter = csv.writer(csvfile)
+with open("data_processed.csv", 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile, delimiter="\t")
     csvwriter.writerow(header)
     csvwriter.writerows(rows)
-# for filename in filenames:
-#     indexes = cast_to_int(get_lines_from_file(filename))
-#     rows = []
-#     for index in indexes:
-#         rows.append(data_lines[index - 1])
-#     with open("data-" + filename, 'w', newline='') as csvfile:
-#         csvwriter = csv.writer(csvfile)
-#         csvwriter.writerows(rows)
