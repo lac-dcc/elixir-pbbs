@@ -1,9 +1,0 @@
-array_type	config	frequency	array_size	elapsed_time
-random_seq	0x09	1.6GHz	10	0.018679
-random_seq	0x09	1.6GHz	100	0.019523
-random_seq	0x09	1.6GHz	1000	0.055909
-random_seq	0x09	1.6GHz	10000	0.462966
-random_seq	0x09	1.6GHz	20000	GET request fails: 
-:nxdomain
-random_seq	0x09	1.6GHz	30000	GET request fails: 
-:nxdomain
