@@ -1,5 +1,6 @@
 integer_sort_type="random_seq"
-frequencies="1.6GHz 1.8GHz"
+frequencies="1.8GHz"
+# frequencies="1.6GHz 1.8GHz"
 configs="0x09 0x60 0x69 0xf0 0x0f 0xff"
 sizes="10 100 1000 10000 20000 30000 40000 50000 60000 70000 80000 90000 100000 200000 300000 400000 500000 600000 700000 800000 900000 1000000"
 
