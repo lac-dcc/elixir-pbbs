@@ -11,11 +11,11 @@ defmodule Sequences.SampleSort do
         if String.to_integer(processes_number) <= length(list) do
           # IO.puts("\nOriginal sequence: ")
           # Utils.Lists.print(list)
+          :erlang.system_flag(:schedulers_online, String.to_integer(processes_number))
 
           {elapsed_time, sorted_list} =
             :timer.tc(fn ->
               sample_sort(
-                String.to_integer(processes_number),
                 String.to_integer(lower_limit),
                 list
               )
@@ -45,16 +45,15 @@ defmodule Sequences.SampleSort do
     end
   end
 
-  defp sample_sort(_, _, []), do: []
+  defp sample_sort(_, []), do: []
 
-  defp sample_sort(_, lower_limit, list) when length(list) <= lower_limit,
+  defp sample_sort(lower_limit, list) when length(list) <= lower_limit,
     do: Sequences.InsertionSort.run(list)
 
-  # need to use the processes number
-  defp sample_sort(processes_number, lower_limit, list) do
+  defp sample_sort(lower_limit, list) do
     if length(Enum.uniq(list)) > 1 do
       # Step 1: Choose the pivots in list. We will choose the pivots numbers based on CPU cores
-      pivots = get_pivots_from_list(list, processes_number)
+      pivots = get_pivots_from_list(list)
 
       if length(pivots) > 1 do
         # Step 2: Sorting my pivots
@@ -70,7 +69,7 @@ defmodule Sequences.SampleSort do
         tasks =
           Enum.map(buckets, fn bucket ->
             Task.async(fn ->
-              sample_sort(processes_number, lower_limit, bucket)
+              sample_sort(lower_limit, bucket)
             end)
           end)
 
@@ -103,9 +102,8 @@ defmodule Sequences.SampleSort do
     end)
   end
 
-  defp get_pivots_from_list(list, _) do
+  defp get_pivots_from_list(list) do
     uniq_list = Enum.uniq(list)
-    # need use the processes_number? hmm
     available_cores = System.schedulers_online()
 
     pivots_number =

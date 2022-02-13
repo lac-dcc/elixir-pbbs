@@ -6,6 +6,7 @@ defmodule Sequences.RadixSort do
     list = Utils.Inputs.get_sequence(input)
 
     if list != [] and Utils.Validators.is_number(p) do
+      :erlang.system_flag(:schedulers_online, String.to_integer(p))
       # IO.puts("\nOriginal sequence: ")
       # Utils.Lists.print(list)
       radix_sort(list)

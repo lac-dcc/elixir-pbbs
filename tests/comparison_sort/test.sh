@@ -5,7 +5,7 @@ frequencies="1.6GHz 1.8GHz"
 configs="0x09 0x60 0x69 0xf0 0x0f 0xff"
 sizes="10 100 1000 10000 20000 30000 40000 50000 60000 70000 80000 90000 100000"
 
-header=$'array_type\tconfig\tfrequency\tarray_size\telapsed_time'
+header=$'array_type\tconfig\tfrequency\tarray_size\tlower_limit\telapsed_time'
 dir=benchmarkings/comparison_sort
 
 mix escript.build
