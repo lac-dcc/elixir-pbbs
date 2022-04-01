@@ -78,61 +78,6 @@ To sort n values in a range [0, m] randomly generated. m it'optional, if not pro
 For both cases, p is the number of workers and ll it's the lower limit used by the algoritm.
 
 
-### Suffix Array
-```bash
-$ To do
-````
-
-### Breadth First Search
-```bash
-$ To do
-````
-
-### Maximal Independent Set
-```bash
-$ To do
-````
-
-### Maximal Matching
-```bash
-$ To do
-````
-
-### Min Spanning Forest
-```bash
-$ To do
-````
-
-### Spanning Forest
-```bash
-$ To do
-````
-
-### Convex Hull
-```bash
-$ To do
-````
-
-### Nearest Neighbors
-```bash
-$ To do
-````
-
-### Delaunay Triangulation
-```bash
-$ To do
-````
-
-### Delaunay Refine
-```bash
-$ To do
-````
-
-### Nbody Force Calculation
-```bash
-$ To do
-````
-
 ## License
 
 [MIT](LICENSE)
