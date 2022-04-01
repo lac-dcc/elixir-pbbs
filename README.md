@@ -1,4 +1,4 @@
-# Monograph - Rewrite the Problem-Based Benchmark Suite in Elixir
+# Problem-Based Benchmark Suite in Elixir
 ### Course
 Bachelor's degree in Information Systems (Bacharelado em Sistemas de Informação) - [Universidade Federal de Minas Gerais](https://ufmg.br/)
 
