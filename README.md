@@ -8,6 +8,9 @@ Bachelor's degree in Information Systems (Bacharelado em Sistemas de Informaçã
 ### Student
 Jean George 😀
 
+### Presentation
+You can take a look at my presentation [here](https://www.youtube.com/watch?v=O689IV_Oj88&t) (pt-BR).
+
 ## Goal
 
 Rewrite the [Problem-Based Benchmark Suite](https://www.cs.cmu.edu/~pbbs/benchmarks.html) in [Elixir](https://elixir-lang.org/).
