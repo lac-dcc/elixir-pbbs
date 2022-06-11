@@ -42,7 +42,7 @@ defmodule ParallelSuffixArray do
       {elem(Enum.at(C, i), 0), Bitwise.band(Enum.at(cl, i), mask)}
     end)
 
-    segOut = Enum.map(1..n, fn i ->
+    seg_out = Enum.map(1..n, fn i ->
       if Enum.at(names, i) == i do
         v = Enum.at(names, i - 1)
         {v, i - v}
@@ -52,9 +52,9 @@ defmodule ParallelSuffixArray do
     end)
 
     vlast = Enum.at(names, n-1)
-    segOut = segOut ++ [ {vlast, n - vlast}]
+    seg_out = seg_out ++ [ {vlast, n - vlast}]
 
-    {output, segOut, ranks}
+    {output, seg_out, ranks}
 
   end
   def suffix_array(s) do
@@ -109,14 +109,62 @@ defmodule ParallelSuffixArray do
     end)
 
     cl = Enum.sort(cl)
-    c = split_segment_top(cl, n)
+    c, seg_out, ranks = split_segment_top(cl, n)
 
     offset = nchars
-    rd = 0
     nKeys = n
 
     # TODO: body of loop
 
+    ranks = recursion(offset, 0, nKeys, c, seg_out, ranks)
 
+    Enum.map(0..length(ranks), fn i -> Enum.at(c, i))
+  end
+
+  defp recursion(offset, rd, n_keys, c, seg_out, ranks) do
+    if rd > 40 do
+      raise "Suffix Array: internal error, too many rounds"
+    end
+
+    segs = Enum.filter(Enum.slice(seg_out, n_keys), fn seg -> elem(seg, 1) > 1 end)
+    n_segs = length(segs)
+    if n_segs == 0 do
+      {c, ranks}
+    else
+      offsets = Enum.map(segs, fn seg -> elem(seg, 1) end)
+
+      # Step 1: cut
+      ci = Enum.map(segs, fn seg ->
+        start = elem(seg, 0)
+        seg_len = elem(seg, 1)
+
+        Enum.slice(c, start..(start + seg_len))
+      end)
+
+      # Step 2: 'update' first elem of tuple
+      ci = Enum.map(ci, fn el ->
+        o = elem(el, 1) + offset
+        if o >= n do
+          {0, elem(el, 1)}
+        else
+          {Enum.at(ranks, o), elem(el, 1)}
+        end
+      end)
+
+      ci = Enum.sort_by(ci, &elem(&1, 0))
+      # end of parallel for (sort)
+
+      scan_result = Enum.scan(offsets, fn a, b ->
+        a + b
+      end)
+
+      n_keys = Enum.at(scan_result, length(scan_result) - 1)
+
+      # TODO: split segment into subsegments if neighbors differ (change seg_out and ranks)
+
+
+      # TODO: figure out a way to reconstruct 'c' from the original orders of ci
+      recursion(offset * 2, rd + 1, n_keys, c, seg_out, ranks)
+    end
   end
 end
