@@ -55,8 +55,58 @@ defmodule ParallelSuffixArray do
     seg_out = seg_out ++ [ {vlast, n - vlast}]
 
     {output, seg_out, ranks}
-
   end
+
+  defp split_segment(seg_out, ranks, cl, start, n) do
+    l = length(seg_out)
+
+    names = Enum.map(1..n, fn i ->
+      if Enum.at(cl, i) != Enum.at(cl, i - 1) do
+        i
+      else
+        0
+      end
+    end)
+    names = [0 | names]
+
+    names = Enum.scan(names, fn a, b ->
+      Kernel.max(a, b)
+    end)
+
+    indexes = 0..l
+    |> Enum.map(fn i -> Enum.at(cl, i) end)
+    |> MapSet.new
+
+    ranks = ranks
+    |> Enum.with_index
+    |> Enum.map(fn ({el, i}) ->
+      if MapSet.member?(indexes, i) do
+        Enum.at(names, i) + start + 1
+      else
+        el
+      end
+    end)
+
+    seg_out = Enum.map(0..n, fn i ->
+      if i+1 >= 1 and i+1 <= l do
+        if Enum.at(names, i+1) == i+1 do
+          v = Enum.at(names, i)
+          {start + v, (i+1) - v}
+        else
+          {0, 0}
+        end
+      else
+        if i+1 == l do
+          v = Enum.at(names, i)
+          {start + v, (i+1) - v}
+        end
+        Enum.at(seg_out, i)
+      end
+    end)
+
+    {seg_out, ranks}
+  end
+
   def suffix_array(s) do
     n = String.length(s)
     pad = 48
@@ -161,6 +211,14 @@ defmodule ParallelSuffixArray do
       n_keys = Enum.at(scan_result, length(scan_result) - 1)
 
       # TODO: split segment into subsegments if neighbors differ (change seg_out and ranks)
+      Enum.map(0..n_segs, fn i ->
+        seg = Enum.at(segs, i)
+        start = elem(seg, 0)
+        l = elem(seg, 1)
+        offset = Enum.at(offsets, i)
+
+        split_segment(Enum.slice(c, start, start + offset), n)
+      end)
 
 
       # TODO: figure out a way to reconstruct 'c' from the original orders of ci
