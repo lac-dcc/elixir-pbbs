@@ -1,5 +1,5 @@
 defmodule SequentialSuffixArray do
-  def naive(string) do
+  def suffix_array(string) do
     len = String.length(string)
     suffixes_start_indexes = 0..(len - 1)
 
