@@ -10,6 +10,5 @@ defmodule SequentialSuffixArray do
 
     Enum.sort_by(suffixes, &elem(&1, 1))
     |> Enum.map(&elem(&1, 0))
-    |> IO.inspect
   end
 end

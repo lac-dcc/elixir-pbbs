@@ -5,7 +5,7 @@ defmodule ParallelSuffixArray do
     mask = Bitwise.<<<(1, 32) - 1
 
     names = Enum.map(1..(n-1), fn i ->
-      if Bitwise.<<<(Enum.at(cl, i, 0), 32) != Bitwise.<<<(Enum.at(cl, i - 1, 0), 32) do
+      if Bitwise.>>>(Enum.at(cl, i, 0), 32) != Bitwise.>>>(Enum.at(cl, i - 1, 0), 32) do
         i
       else
         0
@@ -49,10 +49,10 @@ defmodule ParallelSuffixArray do
     {output, seg_out, ranks}
   end
 
-  defp split_segment(seg_out, ranks, cl, start) do
+  defp split_segment(seg_out, _ranks, cl, start) do
     l = length(seg_out)
 
-    names = Enum.map(1..l, fn i ->
+    names = Enum.map(1..(l-1), fn i ->
       if Enum.at(cl, i) != Enum.at(cl, i - 1) do
         i
       else
@@ -65,38 +65,37 @@ defmodule ParallelSuffixArray do
       Kernel.max(a, b)
     end)
 
-    indexes = 0..l
+    indexes = 0..(l-1)
     |> Enum.map(fn i -> Enum.at(cl, i) end)
-    |> MapSet.new
+    |> Enum.map(fn el -> {elem(el, 1), elem(el, 0)} end)
 
-    ranks = ranks
-    |> Enum.with_index
-    |> Enum.map(fn ({el, i}) ->
-      if MapSet.member?(indexes, i) do
-        Enum.at(names, i) + start + 1
-      else
-        el
-      end
+
+    #ranks = ranks
+    #|> Enum.with_index
+    #|> Enum.map(fn ({el, i}) ->
+    #    if Map.has_key?(indexes, i) do
+    #      Enum.at(names, Map.get(indexes, i)) + start + 1
+    #    else
+    #      el
+    #    end
+    #end)
+
+    delta_ranks = Enum.map(indexes, fn ({k, v}) ->
+      {k, (Enum.at(names, v) + start + 1)}
     end)
 
-    seg_out = Enum.map(0..l, fn i ->
-      if i+1 >= 1 and i+1 <= l do
-        if Enum.at(names, i+1) == i+1 do
-          v = Enum.at(names, i)
-          {start + v, (i+1) - v}
-        else
-          {0, 0}
-        end
+    seg_out = Enum.map(0..(l-2), fn i ->
+      if Enum.at(names, i+1) == i+1 do
+        v = Enum.at(names, i)
+        {start + v, (i+1) - v}
       else
-        if i+1 == l do
-          v = Enum.at(names, i)
-          {start + v, (i+1) - v}
-        end
-        Enum.at(seg_out, i)
+        {0, 0}
       end
     end)
+    last = {start + Enum.at(names, l-1), l - Enum.at(names, l-1)}
+    seg_out = seg_out ++ [last]
 
-    {seg_out, ranks}
+    {seg_out, delta_ranks}
   end
 
   def suffix_array(ss) do
@@ -153,13 +152,27 @@ defmodule ParallelSuffixArray do
     offset = nchars
     nKeys = n
 
-    IO.inspect("offset=#{offset}")
-    IO.inspect("nkeys=#{nKeys}")
-
     {c, _ranks} = recursion(offset, 0, nKeys, c, seg_out, ranks, n)
     ranks = Enum.map(c, &elem(&1, 1))
 
     ranks
+  end
+
+  defp rebuild_c(original_c, ci, idx, result) do
+    if idx >= length(original_c) do
+      result
+    else
+      matches = Enum.find(ci, fn el_tuple ->
+        elem(el_tuple, 0) == idx
+      end)
+      if matches != nil do
+        elements = elem(matches, 1)
+
+        rebuild_c(original_c, ci, idx + length(elements), result ++ elements)
+      else
+        rebuild_c(original_c, ci, idx + 1, result ++ [Enum.at(original_c, idx)])
+      end
+    end
   end
 
   defp recursion(offset, rd, n_keys, c, seg_out, ranks, str_size) do
@@ -175,55 +188,72 @@ defmodule ParallelSuffixArray do
     if n_segs == 0 do
       {c, ranks}
     else
-      # TODO: verify the behavior of this else clause (maps to the main loop of the C++ code), as well as the split_segment function.
+      segs = Enum.slice(seg_out, 0..(n_keys - 1))
+      |> Enum.filter(fn seg ->
+        elem(seg, 1) > 1
+      end)
+
       offsets = Enum.map(segs, fn seg -> elem(seg, 1) end)
-
-      # Step 1: cut
       ci = Enum.map(segs, fn seg ->
-        start = elem(seg, 0)
-        seg_len = elem(seg, 1)
+          start = elem(seg, 0)
+          seg_len = elem(seg, 1)
 
-        {start, Enum.slice(c, start..(start + seg_len))}
+          {start, Enum.slice(c, start, seg_len)}
       end)
 
       # Step 2: 'update' first elem of tuple
       ci = Enum.map(ci, fn el_tuple ->
         idx = elem(el_tuple, 0)
-        el = elem(el_tuple, 1)
-        o = elem(el, 1) + offset
-        if o >= str_size do
-          {idx, {0, elem(el, 1)}}
-        else
-          {idx, {Enum.at(ranks, o), elem(el, 1)}}
-        end
+        current_slice = elem(el_tuple, 1)
+        new_slice = Enum.map(current_slice, fn pair ->
+          o = elem(pair, 1) + offset
+          if o >= str_size do
+            {0, elem(pair, 1)}
+          else
+            {Enum.at(ranks, o), elem(pair, 1)}
+          end
+        end)
+        {idx, new_slice}
       end)
 
-      ci = Enum.map(ci, fn el_tuple ->
-        idx = elem(el_tuple, 0)
-        el = elem(el_tuple, 1)
-        {idx, Enum.sort_by(ci, &elem(&1, 0))}
-      end)
-      # end of parallel for (sort)
-
-      scan_result = Enum.scan(offsets, fn a, b ->
-        a + b
+      ci = Enum.map(ci, fn element ->
+        idx = elem(element, 0)
+        el = elem(element, 1)
+        {idx, Enum.sort_by(el, &elem(&1, 0))}
       end)
 
-      n_keys = Enum.at(scan_result, length(scan_result) - 1)
+      # Reconstruct c from ci. Check if the first element of any element of ci
+      # matches the index i. If that is the case, then we "flat-map" the elements
+      # from that position of ci, otherwise we take c[i].
+      c = rebuild_c(c, ci, 0, [])
 
-      # TODO: split segment into subsegments if neighbors differ (change seg_out and ranks)
-      Enum.map(0..n_segs, fn i ->
+
+      offsets_scan = Enum.scan([0 | offsets], &Kernel.+/2)
+      offsets = elem(List.pop_at(offsets_scan, -1), 1)
+
+      n_keys = List.last(offsets_scan)
+
+      _updated_data = Enum.map(0..(n_segs-1), fn i ->
         seg = Enum.at(segs, i)
         start = elem(seg, 0)
         l = elem(seg, 1)
         offset = Enum.at(offsets, i)
 
-        {ranks, ci} = split_segment(seg_out, ranks, Enum.slice(c, start, start + offset), start)
+        {sg, delta_ranks} = split_segment(
+          Enum.slice(seg_out, offset, l),
+          ranks,
+          Enum.slice(c, start, l),
+          start
+        )
+
+        {
+          sg, # updated segments
+          {offset, offset + l}, # offset of updated segments within original segments
+          delta_ranks # updated ranks (with position information)
+        }
       end)
 
-      # Reconstruct c from ci, ordering ci by the first element of the tuple
-
-      c = Enum.sort(ci, &elem(&1, 0))
+      # TODO: reconstruct ranks and seg_out from updated_data (create rebuild_ functions)
 
       recursion(offset * 2, rd + 1, n_keys, c, seg_out, ranks, str_size)
     end
