@@ -49,7 +49,7 @@ defmodule ParallelSuffixArray do
     {output, seg_out, ranks}
   end
 
-  defp split_segment(seg_out, _ranks, cl, start) do
+  defp split_segment(seg_out, cl, start) do
     l = length(seg_out)
 
     names = Enum.map(1..(l-1), fn i ->
@@ -69,19 +69,8 @@ defmodule ParallelSuffixArray do
     |> Enum.map(fn i -> Enum.at(cl, i) end)
     |> Enum.map(fn el -> {elem(el, 1), elem(el, 0)} end)
 
-
-    #ranks = ranks
-    #|> Enum.with_index
-    #|> Enum.map(fn ({el, i}) ->
-    #    if Map.has_key?(indexes, i) do
-    #      Enum.at(names, Map.get(indexes, i)) + start + 1
-    #    else
-    #      el
-    #    end
-    #end)
-
     delta_ranks = Enum.map(indexes, fn ({k, v}) ->
-      {k, (Enum.at(names, v) + start + 1)}
+      {k, (Enum.at(names, v, 0) + start + 1)}
     end)
 
     seg_out = Enum.map(0..(l-2), fn i ->
@@ -99,6 +88,7 @@ defmodule ParallelSuffixArray do
   end
 
   def suffix_array(ss) do
+    ss = ss <> "\b" # Assuming that "\b" is smaller than any other character
     n = String.length(ss)
     pad = 48
 
@@ -144,7 +134,6 @@ defmodule ParallelSuffixArray do
       Bitwise.<<<(r, 32) + i
     end)
 
-
     cl = Enum.sort(cl)
 
     {c, seg_out, ranks} = split_segment_top(cl, n)
@@ -155,7 +144,7 @@ defmodule ParallelSuffixArray do
     {c, _ranks} = recursion(offset, 0, nKeys, c, seg_out, ranks, n)
     ranks = Enum.map(c, &elem(&1, 1))
 
-    ranks
+    tl(ranks) # drop the first element that maps to the "\b" character
   end
 
   defp rebuild_c(original_c, ci, idx, result) do
@@ -172,6 +161,42 @@ defmodule ParallelSuffixArray do
       else
         rebuild_c(original_c, ci, idx + 1, result ++ [Enum.at(original_c, idx)])
       end
+    end
+  end
+
+  defp rebuild_seg_out(original_seg_out, updated_data, idx, result) do
+    if idx >= length(original_seg_out) do
+      result
+    else
+      if length(updated_data) == 0 do
+        result ++ Enum.slice(original_seg_out, idx..(length(original_seg_out) - 1))
+      else
+        matches = Enum.find(updated_data, fn el_tuple ->
+          offset_descriptor = elem(el_tuple, 1)
+          offset_start = elem(offset_descriptor, 0)
+          offset_start == idx
+        end)
+        if matches != nil do
+          elements = elem(matches, 0)
+          rebuild_seg_out(original_seg_out, updated_data, idx + length(elements), result ++ elements)
+        else
+          rebuild_seg_out(original_seg_out, updated_data, idx + 1, result ++ [Enum.at(original_seg_out, idx)])
+        end
+      end
+    end
+  end
+
+  defp rebuild_ranks(ranks, delta_ranks, idx) do
+    if length(delta_ranks) == 0 do
+      ranks
+    else
+      current_new_rank = hd(delta_ranks)
+      pos = elem(current_new_rank, 0)
+      new_rank_value = elem(current_new_rank, 1)
+
+      updated = List.update_at(ranks, pos, fn _old -> new_rank_value end)
+
+      rebuild_ranks(updated, tl(delta_ranks), idx + 1)
     end
   end
 
@@ -233,7 +258,7 @@ defmodule ParallelSuffixArray do
 
       n_keys = List.last(offsets_scan)
 
-      _updated_data = Enum.map(0..(n_segs-1), fn i ->
+      updated_data = Enum.map(0..(n_segs-1), fn i ->
         seg = Enum.at(segs, i)
         start = elem(seg, 0)
         l = elem(seg, 1)
@@ -241,7 +266,6 @@ defmodule ParallelSuffixArray do
 
         {sg, delta_ranks} = split_segment(
           Enum.slice(seg_out, offset, l),
-          ranks,
           Enum.slice(c, start, l),
           start
         )
@@ -253,7 +277,11 @@ defmodule ParallelSuffixArray do
         }
       end)
 
-      # TODO: reconstruct ranks and seg_out from updated_data (create rebuild_ functions)
+      seg_out = rebuild_seg_out(seg_out, updated_data, 0, [])
+
+      delta_ranks = Enum.flat_map(updated_data, fn data -> elem(data, 2) end)
+
+      ranks = rebuild_ranks(ranks, delta_ranks, 0)
 
       recursion(offset * 2, rd + 1, n_keys, c, seg_out, ranks, str_size)
     end
