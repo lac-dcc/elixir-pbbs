@@ -52,6 +52,8 @@ defmodule ParallelSuffixArray do
       {0, Bitwise.band(get_in_ets_by_pos(cl_table, i), mask)}
     end)
 
+    :ets.delete(cl_table)
+
     seg_out = Enum.map(1..(n-1), fn i ->
       if get_in_ets_by_pos(names_table, i) == i do
         v = get_in_ets_by_pos(names_table, i - 1)
@@ -64,14 +66,20 @@ defmodule ParallelSuffixArray do
     vlast = get_in_ets_by_pos(names_table, n - 1)
     seg_out = seg_out ++ [ {vlast, n - vlast}]
 
+    :ets.delete(names_table)
+
     {output, seg_out, ranks}
   end
 
   defp split_segment(seg_out, cl, start) do
     l = length(seg_out)
 
+    # Inserting tuples (index, elem) into ets for fast random access performance
+    cl_table = :ets.new(:cl, [])
+    :ets.insert(cl_table, Enum.zip(0..(length(cl) - 1), cl))
+
     names = Enum.map(1..(l-1), fn i ->
-      if Enum.at(cl, i) != Enum.at(cl, i - 1) do
+      if get_in_ets_by_pos(cl_table, i) != get_in_ets_by_pos(cl_table, i - 1) do
         i
       else
         0
@@ -84,23 +92,30 @@ defmodule ParallelSuffixArray do
     end)
 
     indexes = 0..(l-1)
-    |> Enum.map(fn i -> Enum.at(cl, i) end)
+    |> Enum.map(fn i -> get_in_ets_by_pos(cl_table, i) end)
     |> Enum.map(fn el -> {elem(el, 1), elem(el, 0)} end)
 
+    :ets.delete(cl_table)
+
+    names_table = :ets.new(:names, [])
+    :ets.insert(names_table, Enum.zip(0..(length(names) - 1), names))
+
     delta_ranks = Enum.map(indexes, fn ({k, v}) ->
-      {k, (Enum.at(names, v, 0) + start + 1)}
+      {k, (get_in_ets_by_pos(names_table, v) + start + 1)}
     end)
 
     seg_out = Enum.map(0..(l-2), fn i ->
-      if Enum.at(names, i+1) == i+1 do
-        v = Enum.at(names, i)
+      if get_in_ets_by_pos(names_table, i+1) == i+1 do
+        v = get_in_ets_by_pos(names_table, i)
         {start + v, (i+1) - v}
       else
         {0, 0}
       end
     end)
-    last = {start + Enum.at(names, l-1), l - Enum.at(names, l-1)}
+    last = {start + get_in_ets_by_pos(names_table, l-1), l - get_in_ets_by_pos(names_table, l-1)}
     seg_out = seg_out ++ [last]
+
+    :ets.delete(names_table)
 
     {seg_out, delta_ranks}
   end
@@ -135,7 +150,7 @@ defmodule ParallelSuffixArray do
     |> Enum.slice(0..255)
 
     char_flags = Enum.map(String.to_charlist(ss), fn c ->
-      Enum.at(flags, c)
+      Enum.at(flags, c) # Enum.at not a big deal here
     end)
 
     s = char_flags ++ List.duplicate(0, pad)
@@ -169,8 +184,8 @@ defmodule ParallelSuffixArray do
     tl(ranks) # drop the first element that maps to the "\b" character
   end
 
-  defp rebuild_c(original_c, ci, idx, result) do
-    if idx >= length(original_c) do
+  defp rebuild_c(original_c_table, original_len, ci, idx, result) do
+    if idx >= original_len do
       result
     else
       matches = Enum.find(ci, fn el_tuple ->
@@ -179,15 +194,15 @@ defmodule ParallelSuffixArray do
       if matches != nil do
         elements = elem(matches, 1)
 
-        rebuild_c(original_c, ci, idx + length(elements), result ++ elements)
+        rebuild_c(original_c_table, original_len, ci, idx + length(elements), result ++ elements)
       else
-        rebuild_c(original_c, ci, idx + 1, result ++ [Enum.at(original_c, idx)])
+        rebuild_c(original_c_table, original_len, ci, idx + 1, result ++ [get_in_ets_by_pos(original_c_table, idx)])
       end
     end
   end
 
-  defp rebuild_seg_out(original_seg_out, updated_data, idx, result) do
-    if idx >= length(original_seg_out) do
+  defp rebuild_seg_out(original_seg_out_table, original_seg_out, original_len, updated_data, idx, result) do
+    if idx >= original_len do
       result
     else
       if length(updated_data) == 0 do
@@ -200,9 +215,9 @@ defmodule ParallelSuffixArray do
         end)
         if matches != nil do
           elements = elem(matches, 0)
-          rebuild_seg_out(original_seg_out, updated_data, idx + length(elements), result ++ elements)
+          rebuild_seg_out(original_seg_out_table, original_seg_out, original_len, updated_data, idx + length(elements), result ++ elements)
         else
-          rebuild_seg_out(original_seg_out, updated_data, idx + 1, result ++ [Enum.at(original_seg_out, idx)])
+          rebuild_seg_out(original_seg_out_table, original_seg_out, original_len, updated_data, idx + 1, result ++ [get_in_ets_by_pos(original_seg_out_table, idx)])
         end
       end
     end
@@ -248,6 +263,10 @@ defmodule ParallelSuffixArray do
           {start, Enum.slice(c, start, seg_len)}
       end)
 
+      # Inserting tuples (index, elem) into ets for fast random access performance
+      ranks_table = :ets.new(:ranks, [])
+      :ets.insert(ranks_table, Enum.zip(0..(length(ranks) - 1), ranks))
+
       # Step 2: 'update' first elem of tuple
       ci = Enum.map(ci, fn el_tuple ->
         idx = elem(el_tuple, 0)
@@ -257,7 +276,7 @@ defmodule ParallelSuffixArray do
           if o >= str_size do
             {0, elem(pair, 1)}
           else
-            {Enum.at(ranks, o), elem(pair, 1)}
+            {get_in_ets_by_pos(ranks_table, o), elem(pair, 1)}
           end
         end)
         {idx, new_slice}
@@ -272,19 +291,31 @@ defmodule ParallelSuffixArray do
       # Reconstruct c from ci. Check if the first element of any element of ci
       # matches the index i. If that is the case, then we "flat-map" the elements
       # from that position of ci, otherwise we take c[i].
-      c = rebuild_c(c, ci, 0, [])
 
+      # Inserting tuples (index, elem) into ets for fast random access performance
+      original_c_table = :ets.new(:original_c, [])
+      :ets.insert(original_c_table, Enum.zip(0..(length(c) - 1), c))
+
+      c = rebuild_c(original_c_table, length(c), ci, 0, [])
+
+      :ets.delete(original_c_table)
 
       offsets_scan = Enum.scan([0 | offsets], &Kernel.+/2)
       offsets = elem(List.pop_at(offsets_scan, -1), 1)
 
       n_keys = List.last(offsets_scan)
 
+      segs_table = :ets.new(:segs, [])
+      :ets.insert(segs_table, Enum.zip(0..(length(segs) - 1), segs))
+
+      offsets_table = :ets.new(:offsets, [])
+      :ets.insert(offsets_table, Enum.zip(0..(length(offsets) - 1), offsets))
+
       updated_data = Enum.map(0..(n_segs-1), fn i ->
-        seg = Enum.at(segs, i)
+        seg = get_in_ets_by_pos(segs_table, i)
         start = elem(seg, 0)
         l = elem(seg, 1)
-        offset = Enum.at(offsets, i)
+        offset = get_in_ets_by_pos(offsets_table, i)
 
         {sg, delta_ranks} = split_segment(
           Enum.slice(seg_out, offset, l),
@@ -299,7 +330,15 @@ defmodule ParallelSuffixArray do
         }
       end)
 
-      seg_out = rebuild_seg_out(seg_out, updated_data, 0, [])
+      :ets.delete(segs_table)
+      :ets.delete(offsets_table)
+
+      seg_out_table = :ets.new(:seg_out, [])
+      :ets.insert(seg_out_table, Enum.zip(0..(length(seg_out) - 1), seg_out))
+
+      seg_out = rebuild_seg_out(seg_out_table, seg_out, length(seg_out), updated_data, 0, [])
+
+      :ets.delete(seg_out_table)
 
       delta_ranks = Enum.flat_map(updated_data, fn data -> elem(data, 2) end)
 
