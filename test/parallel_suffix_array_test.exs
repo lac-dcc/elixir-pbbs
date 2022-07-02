@@ -17,13 +17,24 @@ defmodule ParallelSuffixArrayTest do
     assert ParallelSuffixArray.suffix_array(input) == expected
   end
 
-  @tag timeout: 180000
   test "trigrams input" do
     trigrams = File.read!("tests/suffix_array/trigrams/trigrams.in")
 
     res = ParallelSuffixArray.suffix_array(trigrams)
 
     out = String.trim(File.read!("tests/suffix_array/trigrams/trigrams.out"))
+    expected = Enum.map(String.split(out, " "), &String.to_integer(&1))
+
+    assert expected == res
+  end
+
+  @tag timeout: 180000
+  test "large trigrams input" do
+    trigrams = File.read!("tests/suffix_array/trigrams/trigram_large.in")
+
+    res = ParallelSuffixArray.suffix_array(trigrams)
+
+    out = String.trim(File.read!("tests/suffix_array/trigrams/trigram_large.out"))
     expected = Enum.map(String.split(out, " "), &String.to_integer(&1))
 
     assert expected == res
