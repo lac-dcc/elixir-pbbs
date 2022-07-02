@@ -87,6 +87,15 @@ defmodule ParallelSuffixArray do
     {seg_out, delta_ranks}
   end
 
+  defp get_in_s_by_pos(s_table, pos) do
+    result = :ets.lookup(s_table, pos)
+    if length(result) == 0 do
+      0
+    else
+      elem(hd(result), 1)
+    end
+  end
+
   def suffix_array(ss) do
     ss = ss <> "\b" # Assuming that "\b" is smaller than any other character
     n = String.length(ss)
@@ -122,14 +131,18 @@ defmodule ParallelSuffixArray do
 
     s = char_flags ++ List.duplicate(0, pad)
 
+    # Inserting tuples (index, char) into ets for fast random access performance
+    s_table = :ets.new(:s, [])
+    :ets.insert(s_table, Enum.zip(0..(length(s) - 1), s))
+
     logm = :math.log2(m)
     nchars = trunc(:math.floor(96.0 / logm))
 
     cl = Enum.map(0..(n-1), fn i ->
-      r = Enum.at(s, i)
+      r = get_in_s_by_pos(s_table, i)
 
       r = Enum.reduce(1..(nchars - 1), r, fn j, acc ->
-        (acc * m) + Enum.at(s, (i + j), 0)
+        (acc * m) + get_in_s_by_pos(s_table, i + j)
       end)
       Bitwise.<<<(r, 32) + i
     end)
