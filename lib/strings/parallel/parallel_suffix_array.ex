@@ -1,17 +1,32 @@
 # Description: https://www.cs.cmu.edu/~pbbs/benchmarks/suffixArray.html
 
 defmodule ParallelSuffixArray do
+  defp get_in_ets_by_pos(table, pos) do
+    result = :ets.lookup(table, pos)
+    if length(result) == 0 do
+      0
+    else
+      elem(hd(result), 1)
+    end
+  end
+
   defp split_segment_top(cl, n) do
     mask = Bitwise.<<<(1, 32) - 1
 
+    # Inserting tuples (index, elem) into ets for fast random access performance
+    cl_table = :ets.new(:cl, [])
+    :ets.insert(cl_table, Enum.zip(0..(length(cl) - 1), cl))
+
     names = Enum.map(1..(n-1), fn i ->
-      if Bitwise.>>>(Enum.at(cl, i, 0), 32) != Bitwise.>>>(Enum.at(cl, i - 1, 0), 32) do
+      if Bitwise.>>>(get_in_ets_by_pos(cl_table, i), 32) != Bitwise.>>>(get_in_ets_by_pos(cl_table, i - 1), 32) do
         i
       else
         0
       end
     end)
     names = [0 | names]
+
+    # :ets.delete(cl_table)
 
     names = Enum.scan(names, fn a, b ->
       Kernel.max(a, b)
@@ -21,29 +36,32 @@ defmodule ParallelSuffixArray do
       Bitwise.band(i, mask)
     end)
 
+    # Inserting tuples (index, elem) into ets for fast random access performance
+    names_table = :ets.new(:names, [])
+    :ets.insert(names_table, Enum.zip(0..(length(names) - 1), names))
 
     ranks = indexes
     |> Enum.with_index
     |> Enum.map(fn ({val, idx}) ->
-      {val, Enum.at(names, idx) + 1}
+      {val, get_in_ets_by_pos(names_table, idx) + 1}
     end)
     |> Enum.sort_by(&elem(&1, 0))
     |> Enum.map(&elem(&1, 1))
 
     output = Enum.map(0..(n-1), fn i ->
-      {0, Bitwise.band(Enum.at(cl, i), mask)}
+      {0, Bitwise.band(get_in_ets_by_pos(cl_table, i), mask)}
     end)
 
     seg_out = Enum.map(1..(n-1), fn i ->
-      if Enum.at(names, i) == i do
-        v = Enum.at(names, i - 1)
+      if get_in_ets_by_pos(names_table, i) == i do
+        v = get_in_ets_by_pos(names_table, i - 1)
         {v, i - v}
       else
         {0, 0}
       end
     end)
 
-    vlast = Enum.at(names, n-1)
+    vlast = get_in_ets_by_pos(names_table, n - 1)
     seg_out = seg_out ++ [ {vlast, n - vlast}]
 
     {output, seg_out, ranks}
@@ -85,15 +103,6 @@ defmodule ParallelSuffixArray do
     seg_out = seg_out ++ [last]
 
     {seg_out, delta_ranks}
-  end
-
-  defp get_in_s_by_pos(s_table, pos) do
-    result = :ets.lookup(s_table, pos)
-    if length(result) == 0 do
-      0
-    else
-      elem(hd(result), 1)
-    end
   end
 
   def suffix_array(ss) do
@@ -139,10 +148,10 @@ defmodule ParallelSuffixArray do
     nchars = trunc(:math.floor(96.0 / logm))
 
     cl = Enum.map(0..(n-1), fn i ->
-      r = get_in_s_by_pos(s_table, i)
+      r = get_in_ets_by_pos(s_table, i)
 
       r = Enum.reduce(1..(nchars - 1), r, fn j, acc ->
-        (acc * m) + get_in_s_by_pos(s_table, i + j)
+        (acc * m) + get_in_ets_by_pos(s_table, i + j)
       end)
       Bitwise.<<<(r, 32) + i
     end)
