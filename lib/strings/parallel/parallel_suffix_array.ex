@@ -17,55 +17,78 @@ defmodule ParallelSuffixArray do
     cl_table = :ets.new(:cl, [])
     :ets.insert(cl_table, Enum.zip(0..(length(cl) - 1), cl))
 
-    names = Enum.map(1..(n-1), fn i ->
-      if Bitwise.>>>(get_in_ets_by_pos(cl_table, i), 32) != Bitwise.>>>(get_in_ets_by_pos(cl_table, i - 1), 32) do
-        i
-      else
-        0
-      end
-    end)
-    names = [0 | names]
-
-    # :ets.delete(cl_table)
-
-    names = Enum.scan(names, fn a, b ->
-      Kernel.max(a, b)
+    indexes_task = Task.async(fn ->
+      indexes = Enum.map(cl, fn i ->
+        Bitwise.band(i, mask)
+      end)
+      indexes
     end)
 
-    indexes = Enum.map(cl, fn i ->
-      Bitwise.band(i, mask)
+    names_task = Task.async(fn ->
+      names = Enum.map(1..(n-1), fn i ->
+        if Bitwise.>>>(get_in_ets_by_pos(cl_table, i), 32) != Bitwise.>>>(get_in_ets_by_pos(cl_table, i - 1), 32) do
+          i
+        else
+          0
+        end
+      end)
+      names = [0 | names]
+
+      names = Enum.scan(names, fn a, b ->
+        Kernel.max(a, b)
+      end)
+
+      names
     end)
+
+    output_task = Task.async(fn ->
+      output = Enum.map(0..(n-1), fn i ->
+        {0, Bitwise.band(get_in_ets_by_pos(cl_table, i), mask)}
+      end)
+      output
+    end)
+
+    names = Task.await(names_task)
 
     # Inserting tuples (index, elem) into ets for fast random access performance
     names_table = :ets.new(:names, [])
     :ets.insert(names_table, Enum.zip(0..(length(names) - 1), names))
 
-    ranks = indexes
-    |> Enum.with_index
-    |> Enum.map(fn ({val, idx}) ->
-      {val, get_in_ets_by_pos(names_table, idx) + 1}
+    seg_out_task = Task.async(fn ->
+      seg_out = Enum.map(1..(n-1), fn i ->
+        if get_in_ets_by_pos(names_table, i) == i do
+          v = get_in_ets_by_pos(names_table, i - 1)
+          {v, i - v}
+        else
+          {0, 0}
+        end
+      end)
+
+      seg_out
     end)
-    |> Enum.sort_by(&elem(&1, 0))
-    |> Enum.map(&elem(&1, 1))
 
-    output = Enum.map(0..(n-1), fn i ->
-      {0, Bitwise.band(get_in_ets_by_pos(cl_table, i), mask)}
-    end)
+    indexes = Task.await(indexes_task)
 
-    :ets.delete(cl_table)
+    ranks_task = Task.async(fn ->
+      ranks = indexes
+      |> Enum.with_index
+      |> Enum.map(fn ({val, idx}) ->
+        {val, get_in_ets_by_pos(names_table, idx) + 1}
+      end)
+      |> Enum.sort_by(&elem(&1, 0))
+      |> Enum.map(&elem(&1, 1))
 
-    seg_out = Enum.map(1..(n-1), fn i ->
-      if get_in_ets_by_pos(names_table, i) == i do
-        v = get_in_ets_by_pos(names_table, i - 1)
-        {v, i - v}
-      else
-        {0, 0}
-      end
+      ranks
     end)
 
     vlast = get_in_ets_by_pos(names_table, n - 1)
+
+    seg_out = Task.await(seg_out_task)
     seg_out = seg_out ++ [ {vlast, n - vlast}]
 
+    [output, ranks] = Task.await_many([output_task, ranks_task])
+
+    :ets.delete(cl_table)
     :ets.delete(names_table)
 
     {output, seg_out, ranks}
