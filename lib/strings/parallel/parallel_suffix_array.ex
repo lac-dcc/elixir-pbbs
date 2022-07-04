@@ -103,47 +103,60 @@ defmodule ParallelSuffixArray do
     |> Enum.map(fn ({val, idx}) -> {idx, val} end)
     :ets.insert(cl_table, cl_kv)
 
-    names = Enum.map(1..(l-1), fn i ->
-      if get_in_ets_by_pos(cl_table, i) != get_in_ets_by_pos(cl_table, i - 1) do
-        i
-      else
-        0
-      end
-    end)
-    names = [0 | names]
+    parent_pid = self()
+    names_task = Task.async(fn ->
+      names = Enum.map(1..(l-1), fn i ->
+        if get_in_ets_by_pos(cl_table, i) != get_in_ets_by_pos(cl_table, i - 1) do
+          i
+        else
+          0
+        end
+      end)
+      names = [0 | names]
 
-    names = Enum.scan(names, fn a, b ->
-      Kernel.max(a, b)
+      names = Enum.scan(names, fn a, b ->
+        Kernel.max(a, b)
+      end)
+
+      :ets.new(:names, [:public, :named_table])
+      names_kv = Enum.with_index(names)
+      |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+      :ets.insert(:names, names_kv)
+      :ets.give_away(:names, parent_pid, [])
     end)
 
     indexes = 0..(l-1)
     |> Enum.map(fn i -> get_in_ets_by_pos(cl_table, i) end)
     |> Enum.map(fn el -> {elem(el, 1), elem(el, 0)} end)
 
+    Task.await(names_task)
+
     :ets.delete(cl_table)
 
-    names_table = :ets.new(:names, [])
-    names_kv = Enum.with_index(names)
-    |> Enum.map(fn ({val, idx}) -> {idx, val} end)
-    :ets.insert(names_table, names_kv)
-
-    delta_ranks = Enum.map(indexes, fn ({k, v}) ->
-      {k, (get_in_ets_by_pos(names_table, v) + start + 1)}
+    delta_ranks_task = Task.async(fn ->
+      Enum.map(indexes, fn ({k, v}) ->
+        {k, (get_in_ets_by_pos(:names, v) + start + 1)}
+      end)
     end)
 
-    seg_out = Enum.map(0..(l-2), fn i ->
-      if get_in_ets_by_pos(names_table, i+1) == i+1 do
-        v = get_in_ets_by_pos(names_table, i)
-        {start + v, (i+1) - v}
-      else
-        {0, 0}
-      end
+    seg_out_task = Task.async(fn ->
+      seg_out = Enum.map(0..(l-2), fn i ->
+        if get_in_ets_by_pos(:names, i+1) == i+1 do
+          v = get_in_ets_by_pos(:names, i)
+          {start + v, (i+1) - v}
+        else
+          {0, 0}
+        end
+      end)
+      last = {start + get_in_ets_by_pos(:names, l-1), l - get_in_ets_by_pos(:names, l-1)}
+      seg_out = seg_out ++ [last]
+
+      seg_out
     end)
-    last = {start + get_in_ets_by_pos(names_table, l-1), l - get_in_ets_by_pos(names_table, l-1)}
-    seg_out = seg_out ++ [last]
 
-    :ets.delete(names_table)
 
+    [seg_out, delta_ranks] = Task.await_many([seg_out_task, delta_ranks_task])
+    :ets.delete(:names)
     {seg_out, delta_ranks}
   end
 
