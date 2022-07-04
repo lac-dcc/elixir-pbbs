@@ -15,15 +15,11 @@ defmodule ParallelSuffixArray do
 
     # Inserting tuples (index, elem) into ets for fast random access performance
     cl_table = :ets.new(:cl, [])
-    :ets.insert(cl_table, Enum.zip(0..(length(cl) - 1), cl))
+    cl_kv = Enum.with_index(cl)
+    |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+    :ets.insert(cl_table, cl_kv)
 
-    indexes_task = Task.async(fn ->
-      indexes = Enum.map(cl, fn i ->
-        Bitwise.band(i, mask)
-      end)
-      indexes
-    end)
-
+    parent_pid = self()
     names_task = Task.async(fn ->
       names = Enum.map(1..(n-1), fn i ->
         if Bitwise.>>>(get_in_ets_by_pos(cl_table, i), 32) != Bitwise.>>>(get_in_ets_by_pos(cl_table, i - 1), 32) do
@@ -38,26 +34,31 @@ defmodule ParallelSuffixArray do
         Kernel.max(a, b)
       end)
 
-      names
+      # Inserting tuples (index, elem) into ets for fast random access performance
+      :ets.new(:names, [:public, :named_table])
+
+      names_kv = Enum.with_index(names)
+      |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+      :ets.insert(:names, names_kv)
+      :ets.give_away(:names, parent_pid, [])
     end)
 
     output_task = Task.async(fn ->
-      output = Enum.map(0..(n-1), fn i ->
+      Enum.map(0..(n-1), fn i ->
         {0, Bitwise.band(get_in_ets_by_pos(cl_table, i), mask)}
       end)
-      output
     end)
 
-    names = Task.await(names_task)
+    indexes = Enum.map(cl, fn i ->
+      Bitwise.band(i, mask)
+    end)
 
-    # Inserting tuples (index, elem) into ets for fast random access performance
-    names_table = :ets.new(:names, [])
-    :ets.insert(names_table, Enum.zip(0..(length(names) - 1), names))
+    Task.await(names_task)
 
     seg_out_task = Task.async(fn ->
       seg_out = Enum.map(1..(n-1), fn i ->
-        if get_in_ets_by_pos(names_table, i) == i do
-          v = get_in_ets_by_pos(names_table, i - 1)
+        if get_in_ets_by_pos(:names, i) == i do
+          v = get_in_ets_by_pos(:names, i - 1)
           {v, i - v}
         else
           {0, 0}
@@ -67,13 +68,11 @@ defmodule ParallelSuffixArray do
       seg_out
     end)
 
-    indexes = Task.await(indexes_task)
-
     ranks_task = Task.async(fn ->
       ranks = indexes
       |> Enum.with_index
       |> Enum.map(fn ({val, idx}) ->
-        {val, get_in_ets_by_pos(names_table, idx) + 1}
+        {val, get_in_ets_by_pos(:names, idx) + 1}
       end)
       |> Enum.sort_by(&elem(&1, 0))
       |> Enum.map(&elem(&1, 1))
@@ -81,7 +80,7 @@ defmodule ParallelSuffixArray do
       ranks
     end)
 
-    vlast = get_in_ets_by_pos(names_table, n - 1)
+    vlast = get_in_ets_by_pos(:names, n - 1)
 
     seg_out = Task.await(seg_out_task)
     seg_out = seg_out ++ [ {vlast, n - vlast}]
@@ -89,7 +88,7 @@ defmodule ParallelSuffixArray do
     [output, ranks] = Task.await_many([output_task, ranks_task])
 
     :ets.delete(cl_table)
-    :ets.delete(names_table)
+    :ets.delete(:names)
 
     {output, seg_out, ranks}
   end
@@ -99,7 +98,10 @@ defmodule ParallelSuffixArray do
 
     # Inserting tuples (index, elem) into ets for fast random access performance
     cl_table = :ets.new(:cl, [])
-    :ets.insert(cl_table, Enum.zip(0..(length(cl) - 1), cl))
+
+    cl_kv = Enum.with_index(cl)
+    |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+    :ets.insert(cl_table, cl_kv)
 
     names = Enum.map(1..(l-1), fn i ->
       if get_in_ets_by_pos(cl_table, i) != get_in_ets_by_pos(cl_table, i - 1) do
@@ -121,7 +123,9 @@ defmodule ParallelSuffixArray do
     :ets.delete(cl_table)
 
     names_table = :ets.new(:names, [])
-    :ets.insert(names_table, Enum.zip(0..(length(names) - 1), names))
+    names_kv = Enum.with_index(names)
+    |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+    :ets.insert(names_table, names_kv)
 
     delta_ranks = Enum.map(indexes, fn ({k, v}) ->
       {k, (get_in_ets_by_pos(names_table, v) + start + 1)}
@@ -180,7 +184,9 @@ defmodule ParallelSuffixArray do
 
     # Inserting tuples (index, char) into ets for fast random access performance
     s_table = :ets.new(:s, [])
-    :ets.insert(s_table, Enum.zip(0..(length(s) - 1), s))
+    s_kv = Enum.with_index(s)
+    |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+    :ets.insert(s_table, s_kv)
 
     logm = :math.log2(m)
     nchars = trunc(:math.floor(96.0 / logm))
@@ -288,7 +294,9 @@ defmodule ParallelSuffixArray do
 
       # Inserting tuples (index, elem) into ets for fast random access performance
       ranks_table = :ets.new(:ranks, [])
-      :ets.insert(ranks_table, Enum.zip(0..(length(ranks) - 1), ranks))
+      ranks_kv = Enum.with_index(ranks)
+      |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+      :ets.insert(ranks_table, ranks_kv)
 
       # Step 2: 'update' first elem of tuple
       ci = Enum.map(ci, fn el_tuple ->
@@ -317,7 +325,9 @@ defmodule ParallelSuffixArray do
 
       # Inserting tuples (index, elem) into ets for fast random access performance
       original_c_table = :ets.new(:original_c, [])
-      :ets.insert(original_c_table, Enum.zip(0..(length(c) - 1), c))
+      original_c_kv = Enum.with_index(c)
+      |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+      :ets.insert(original_c_table, original_c_kv)
 
       c = rebuild_c(original_c_table, length(c), ci, 0, [])
 
@@ -329,10 +339,16 @@ defmodule ParallelSuffixArray do
       n_keys = List.last(offsets_scan)
 
       segs_table = :ets.new(:segs, [])
-      :ets.insert(segs_table, Enum.zip(0..(length(segs) - 1), segs))
+      segs_kv = Enum.with_index(segs)
+      |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+      :ets.insert(segs_table, segs_kv)
+
 
       offsets_table = :ets.new(:offsets, [])
-      :ets.insert(offsets_table, Enum.zip(0..(length(offsets) - 1), offsets))
+      offsets_kv = Enum.with_index(offsets)
+      |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+      :ets.insert(offsets_table, offsets_kv)
+
 
       updated_data = Enum.map(0..(n_segs-1), fn i ->
         seg = get_in_ets_by_pos(segs_table, i)
@@ -357,7 +373,10 @@ defmodule ParallelSuffixArray do
       :ets.delete(offsets_table)
 
       seg_out_table = :ets.new(:seg_out, [])
-      :ets.insert(seg_out_table, Enum.zip(0..(length(seg_out) - 1), seg_out))
+
+      seg_out_kv = Enum.with_index(seg_out)
+      |> Enum.map(fn ({val, idx}) -> {idx, val} end)
+      :ets.insert(seg_out_table, seg_out_kv)
 
       seg_out = rebuild_seg_out(seg_out_table, seg_out, length(seg_out), updated_data, 0, [])
 
