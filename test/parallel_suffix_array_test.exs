@@ -18,18 +18,6 @@ defmodule ParallelSuffixArrayTest do
   end
 
   test "trigrams input" do
-    trigrams = File.read!("tests/suffix_array/trigrams/trigrams.in")
-
-    res = ParallelSuffixArray.suffix_array(trigrams)
-
-    out = String.trim(File.read!("tests/suffix_array/trigrams/trigrams.out"))
-    expected = Enum.map(String.split(out, " "), &String.to_integer(&1))
-
-    assert expected == res
-  end
-
-  @tag timeout: 180000
-  test "large trigrams input" do
     trigrams = File.read!("tests/suffix_array/trigrams/trigram_large.in")
 
     res = ParallelSuffixArray.suffix_array(trigrams)
@@ -38,6 +26,97 @@ defmodule ParallelSuffixArrayTest do
     expected = Enum.map(String.split(out, " "), &String.to_integer(&1))
 
     assert expected == res
+  end
+
+  defp to_csv(header, data, line_mapping_fn) do
+    lines = Enum.map(data, fn line -> line_mapping_fn.(line) end)
+    lines = [header | lines]
+
+    Enum.join(lines, "\n")
+  end
+
+  @tag skip: true
+  test "large dna input" do
+    tests = 20000..260000//20000
+    |> Enum.map(fn size ->
+      {"tests/suffix_array/dna/dna_#{size}",
+      "tests/suffix_array/dna/output_dna_#{size}"}
+    end)
+
+    data = Enum.map(tests, fn ({infile, outfile}) ->
+      trigrams = File.read!(infile)
+      out = String.trim(File.read!(outfile))
+      expected = Enum.map(String.split(out, " "), &String.to_integer(&1))
+
+      lista = Enum.map(0..10, fn _i ->
+        {t1, res} = Benchmark.measure(fn -> ParallelSuffixArray.suffix_array(trigrams) end)
+        {t2, res2} = Benchmark.measure(fn -> NonParallelSuffixArray.suffix_array(trigrams) end)
+
+        assert expected == res
+        assert expected == res2
+
+        IO.puts("Testcase: #{infile}")
+        IO.puts("Parallel: #{t1 / 1000}ms")
+        IO.puts("Non-Parallel: #{t2 / 1000}ms")
+
+        {infile, (t1/1000), (t2/1000)}
+      end)
+
+      t1_avg = (Enum.map(lista, fn l -> elem(l, 1) end) |> Enum.sum()) / length(lista)
+      t2_avg = (Enum.map(lista, fn l -> elem(l, 2) end) |> Enum.sum()) / length(lista)
+
+      {infile, t1_avg, t2_avg}
+    end)
+
+    header = "test_size,parallel_time,non_parallel_time"
+    csv = to_csv(header, data, fn ({infile, parallel_time, non_parallel_time}) ->
+      "#{infile},#{parallel_time},#{non_parallel_time}"
+    end)
+    File.write!("results_dna.csv", csv)
+  end
+
+  @tag skip: true
+  test "naive" do
+    tests = 1..9
+    |> Enum.map(fn size ->
+      {"tests/suffix_array/trigrams/small/small_input#{size}",
+      "tests/suffix_array/trigrams/small/small_output#{size}"}
+    end)
+
+    data = Enum.map(tests, fn ({infile, outfile}) ->
+      trigrams = File.read!(infile)
+      out = String.trim(File.read!(outfile))
+      expected = Enum.map(String.split(out, " "), &String.to_integer(&1))
+
+      lista = Enum.map(0..10, fn _i ->
+        {t1, res} = Benchmark.measure(fn -> ParallelSuffixArray.suffix_array(trigrams) end)
+        {t2, res2} = Benchmark.measure(fn -> NonParallelSuffixArray.suffix_array(trigrams) end)
+        {tnaive, res3} = Benchmark.measure(fn -> SequentialSuffixArray.suffix_array(trigrams) end)
+
+        assert expected == res
+        assert expected == res2
+        assert expected == res3
+
+        IO.puts("Testcase: #{infile}")
+        IO.puts("Naive: #{tnaive / 1000}ms")
+        IO.puts("Parallel: #{t1 / 1000}ms")
+        IO.puts("NonParallel: #{t2 / 1000}ms")
+
+        {infile, (tnaive / 1000), (t1 / 1000), (t2 / 1000)}
+      end)
+
+      tnaive_avg = (Enum.map(lista, fn l -> elem(l, 1) end) |> Enum.sum()) / length(lista)
+      t1_avg = (Enum.map(lista, fn l -> elem(l, 2) end) |> Enum.sum()) / length(lista)
+      t2_avg = (Enum.map(lista, fn l -> elem(l, 3) end) |> Enum.sum()) / length(lista)
+
+      {infile, tnaive_avg, t1_avg, t2_avg}
+    end)
+
+    header = "test_size,naive_time,parallel_time,nonparallel_time"
+    csv = to_csv(header, data, fn ({infile, naive_time, t1, t2}) ->
+      "#{infile},#{naive_time},#{t1},#{t2}"
+    end)
+    File.write!("results_with_naive.csv", csv)
   end
 
 end
