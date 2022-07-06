@@ -45,12 +45,12 @@ defmodule Sequences.SampleSort do
     end
   end
 
-  defp sample_sort(_, []), do: []
+  def sample_sort(_, []), do: []
 
-  defp sample_sort(lower_limit, list) when length(list) <= lower_limit,
+  def sample_sort(lower_limit, list) when length(list) <= lower_limit,
     do: Sequences.InsertionSort.run(list)
 
-  defp sample_sort(lower_limit, list) do
+  def sample_sort(lower_limit, list) do
     if length(Enum.uniq(list)) > 1 do
       # Step 1: Choose the pivots in list. We will choose the pivots numbers based on CPU cores
       pivots = get_pivots_from_list(list)

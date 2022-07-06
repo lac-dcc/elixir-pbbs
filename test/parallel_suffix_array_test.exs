@@ -1,6 +1,7 @@
 defmodule ParallelSuffixArrayTest do
   use ExUnit.Case
 
+  @tag skip: true
   test "sample lorem ipsum string" do
     input = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
 
@@ -8,6 +9,7 @@ defmodule ParallelSuffixArrayTest do
     assert ParallelSuffixArray.suffix_array(input) == expected
   end
 
+  @tag skip: true
   test "string with repeated 2-character patterns (triggers two iterations)" do
     input = "ACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACAC"
 
@@ -17,15 +19,22 @@ defmodule ParallelSuffixArrayTest do
     assert ParallelSuffixArray.suffix_array(input) == expected
   end
 
+  @tag timeout: 240_000
   test "trigrams input" do
-    trigrams = File.read!("tests/suffix_array/trigrams/trigram_large.in")
+    trigrams = File.read!("tests/suffix_array/trigrams/original_trigrams_input")
+    #trigrams = "ACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACAC"
 
-    res = ParallelSuffixArray.suffix_array(trigrams)
+    {time, res} = Benchmark.measure(fn -> NaiveParallelSuffixArray.suffix_array(trigrams) end)
+    IO.puts("NaiveParallelSuffixArray: #{time/1000}ms")
+    {times, ress} = Benchmark.measure(fn -> SequentialSuffixArray.suffix_array(trigrams) end)
 
-    out = String.trim(File.read!("tests/suffix_array/trigrams/trigram_large.out"))
-    expected = Enum.map(String.split(out, " "), &String.to_integer(&1))
+    IO.puts("SequentialSuffixArray: #{times/1000}ms")
 
-    assert expected == res
+    #out = String.trim(File.read!("tests/suffix_array/dna/output_dna_260000"))
+    #expected = Enum.map(String.split(out, " "), &String.to_integer(&1))
+    #expected = Enum.to_list(60..0//-2) ++ Enum.to_list(61..1//-2)
+
+    #assert expected == res
   end
 
   defp to_csv(header, data, line_mapping_fn) do
@@ -117,6 +126,22 @@ defmodule ParallelSuffixArrayTest do
       "#{infile},#{naive_time},#{t1},#{t2}"
     end)
     File.write!("results_with_naive.csv", csv)
+  end
+
+  @tag skip: true
+  test "ab" do
+    #to_sort = Enum.to_list(10000..0//-1)
+    to_sort = Stream.repeatedly(fn -> :rand.uniform(10000000) end) |> Stream.uniq |> Enum.take(1000000)
+    #to_sort = Enum.to_list(0..10000)
+    :erlang.system_flag(:schedulers_online, 8)
+    {time, res} = Benchmark.measure(fn -> Sequences.SampleSort.sample_sort(10, to_sort) end)
+    {time_serial, res_serial} = Benchmark.measure(fn -> Enum.sort(to_sort) end)
+
+    assert res == res_serial
+
+    IO.puts("SampleSort timings for reversed list with 10k elements")
+    IO.puts("time: #{time / 1000}ms")
+    IO.puts("time_serial: #{time_serial / 1000}ms")
   end
 
 end

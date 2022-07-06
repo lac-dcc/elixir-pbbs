@@ -5,7 +5,7 @@ defmodule SequentialSuffixArray do
 
     suffixes = Enum.map(
       suffixes_start_indexes,
-      fn start -> {start, String.slice(string, start..len)} end
+      fn s -> {s, binary_part(string, s, len - s)} end
     )
 
     Enum.sort_by(suffixes, &elem(&1, 1))
