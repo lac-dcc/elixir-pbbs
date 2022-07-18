@@ -1,8 +1,11 @@
 defmodule NaiveParallelSuffixArray do
   def suffix_array(string) do
-    len = String.length(string)
+    suffix_array(string, System.schedulers_online())
+  end
 
-    size = div(len, 11)
+  def suffix_array(string, parallelism_degree) do
+    len = String.length(string)
+    size = div(len, parallelism_degree)
     parts = 0..(len-1)//size
 
     tasks = Enum.map(parts, fn start ->
