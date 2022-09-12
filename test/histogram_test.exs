@@ -21,7 +21,7 @@ defmodule HistogramTest do
   end
 
   test "large input, single value" do
-    size = 100000000
+    size = 10000000
     buckets = 10
 
     input = List.duplicate(0, size)
@@ -31,6 +31,10 @@ defmodule HistogramTest do
 
     {time, res} = Benchmark.measure(fn -> Sequences.Histogram.histogram(input, buckets) end)
     IO.puts("Sequential time: #{time/1000}ms")
+    assert res == [size,0,0,0,0,0,0,0,0,0]
+
+    {time, res} = Benchmark.measure(fn -> Sequences.Histogram.Parallel.DivideAndConquer.histogram(input, buckets) end)
+    IO.puts("Parallel divide and conquer time: #{time/1000}ms")
     assert res == [size,0,0,0,0,0,0,0,0,0]
   end
 
@@ -47,5 +51,14 @@ defmodule HistogramTest do
     {time, res} = Benchmark.measure(fn -> Sequences.Histogram.histogram(input, buckets) end)
     IO.puts("Sequential time (varied): #{time/1000}ms")
     assert res == [size, size, size, size, size, size, size, size, size, size]
+
+    {time, res} = Benchmark.measure(fn -> Sequences.Histogram.Parallel.DivideAndConquer.histogram(input, buckets) end)
+    IO.puts("Parallel divide and conquer time (varied): #{time/1000}ms")
+    assert res == [size, size, size, size, size, size, size, size, size, size]
+  end
+
+  test "divide and conquer works" do
+    input = [3,3,3,3,3,3,2,2,2,1,1,1,1,1,1,0,0,0]
+    assert Sequences.Histogram.Parallel.DivideAndConquer.histogram(input, 4) == [3,6,3,6]
   end
 end
