@@ -1,6 +1,5 @@
 defmodule Sequences.Histogram.Parallel.DivideAndConquer do
-  def histogram(nums, buckets) do
-    p = 6
+  def histogram(nums, buckets, p) do
     size = div(length(nums), p)
 
     result_list = List.duplicate(0, buckets)
