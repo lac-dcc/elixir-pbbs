@@ -16,8 +16,8 @@ defmodule HistogramTest do
   end
 
   test "parallel works" do
-    input = [3,3,3,3,3,3,2,2,2,1,1,1,1,1,1,0,0,0]
-    assert Sequences.Histogram.Parallel.histogram(input, 4) == [3,6,3,6]
+    input = [3,3,3,3,3,3,2,2,2,1,1,1,1,1,1,0,0,0,0]
+    assert Sequences.Histogram.Parallel.histogram(input, 4) == [4,6,3,6]
   end
 
   test "divide and conquer works" do
