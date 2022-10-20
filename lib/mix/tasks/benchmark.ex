@@ -43,11 +43,22 @@ defmodule Mix.Tasks.Benchmark do
         "serial",
         "actors",
         "dc",
-        #"dc_tuples"
+        "dc_fast"
+      ]),
+      "word_count" => MapSet.new([
+        "serial",
+        "parallel",
+      ]),
+      "remove_duplicates" => MapSet.new([
+        "serial",
+        "parallel",
+        "fast_parallel"
       ]),
     }
     drivers = %{
       "histogram" => &Utils.HistogramBenchmarkDriver.run_benchmark/2,
+      "word_count" => &Utils.WordCountBenchmarkDriver.run_benchmark/2,
+      "remove_duplicates" => &Utils.RemoveDuplicatesBenchmarkDriver.run_benchmark/2,
     }
 
     available_implementations = impl_map[algorithm]

@@ -1,6 +1,5 @@
 defmodule Strings.WordCount.Parallel do
-  def word_count(string) do
-    p = 6
+  def word_count(string, p) do
     words = String.split(string)
     size = ceil(length(words) / p)
 
@@ -9,7 +8,6 @@ defmodule Strings.WordCount.Parallel do
     |> Enum.map(fn start ->
       Task.async(fn ->
         Enum.slice(words, start, size)
-        |> IO.inspect
         |> Enum.frequencies
       end)
     end)

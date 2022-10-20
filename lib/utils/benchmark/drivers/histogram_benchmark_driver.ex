@@ -6,20 +6,22 @@ defmodule Utils.HistogramBenchmarkDriver do
 
     impl_map = %{
       "serial" => fn ({data, _p}) -> Sequences.Histogram.histogram(data, buckets) end,
-      "actors" => fn ({data, _p}) -> Sequences.Histogram.Parallel.histogram(data, buckets) end,
+      #"actors" => fn ({data, _p}) -> Sequences.Histogram.Parallel.histogram(data, buckets) end,
       "dc" => fn ({data, p}) -> Sequences.Histogram.Parallel.DivideAndConquer.histogram(data, buckets, p) end,
-      # TODO: handle implementations that deviate from the default signature (introduce new level of abstraction?)
+      "dc_fast" => fn ({data, p}) -> Sequences.Histogram.Parallel.DivideAndConquer.histogram2(data, buckets, p) end,
     }
 
+    large_list = Utils.Generators.random_sequence(buckets, 1_000_000)
+
     inputs = %{
-      "large list, p=1" => {Utils.Generators.random_sequence(buckets, 1_000_000), 1},
-      "large list, p=2" => {Utils.Generators.random_sequence(buckets, 1_000_000), 2},
-      "large list, p=4" => {Utils.Generators.random_sequence(buckets, 1_000_000), 4},
-      "large list, p=6" => {Utils.Generators.random_sequence(buckets, 1_000_000), 6},
-      "large list, p=12" => {Utils.Generators.random_sequence(buckets, 1_000_000), 12},
-      "large list, p=24" => {Utils.Generators.random_sequence(buckets, 1_000_000), 24},
-      "large list, p=32" => {Utils.Generators.random_sequence(buckets, 1_000_000), 32},
-      "large list, p=40" => {Utils.Generators.random_sequence(buckets, 1_000_000), 40},
+      "large list, p=1" => {large_list, 1},
+      "large list, p=2" => {large_list, 2},
+      "large list, p=4" => {large_list, 4},
+      "large list, p=6" => {large_list, 6},
+      "large list, p=12" => {large_list, 12},
+      "large list, p=24" => {large_list, 24},
+      "large list, p=32" => {large_list, 32},
+      "large list, p=40" => {large_list, 40},
     }
 
     to_run = Enum.filter(impl_map, fn ({key, _value}) ->
@@ -31,7 +33,7 @@ defmodule Utils.HistogramBenchmarkDriver do
       to_run,
       inputs: inputs,
       formatters: [
-        {Benchee.Formatters.CSV, file: "output.csv"}
+        {Benchee.Formatters.CSV, file: "output_histogram.csv"}
       ]
     )
   end

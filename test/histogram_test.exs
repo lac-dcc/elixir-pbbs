@@ -24,4 +24,9 @@ defmodule HistogramTest do
     input = [3,3,3,3,3,3,2,2,2,1,1,1,1,1,1,0,0,0]
     assert Sequences.Histogram.Parallel.DivideAndConquer.histogram(input, 4, 6) == [3,6,3,6]
   end
+
+  test "dc2 works" do
+    input = List.duplicate(5, 400000)
+    assert Sequences.Histogram.Parallel.DivideAndConquer.histogram2(input, 6, 1) == [0,0,0,0,0,400000]
+  end
 end
