@@ -6,7 +6,6 @@ defmodule Utils.RemoveDuplicatesBenchmarkDriver do
     impl_map = %{
       "serial" => fn ({data, _p}) -> Sequences.RemoveDuplicates.remove_duplicates(data) end,
       "parallel" => fn ({data, p}) -> Sequences.RemoveDuplicates.Parallel.DivideAndConquer.remove_duplicates(data, p) end,
-      "fast_parallel" => fn ({data, p}) -> Sequences.RemoveDuplicates.Parallel.DivideAndConquer.remove_duplicates2(data, p) end,
     }
 
     large_list = Utils.Generators.random_sequence(1_000_000)
@@ -29,6 +28,7 @@ defmodule Utils.RemoveDuplicatesBenchmarkDriver do
 
     Benchee.run(
       to_run,
+      time: 30,
       inputs: inputs,
       formatters: [
         {Benchee.Formatters.CSV, file: "output_ddup.csv"}

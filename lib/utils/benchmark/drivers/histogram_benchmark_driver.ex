@@ -30,6 +30,7 @@ defmodule Utils.HistogramBenchmarkDriver do
 
     Benchee.run(
       to_run,
+      time: 30,
       inputs: inputs,
       formatters: [
         {Benchee.Formatters.CSV, file: "output_histogram.csv"}
