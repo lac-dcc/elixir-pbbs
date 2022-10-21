@@ -1,4 +1,4 @@
-defmodule WordCountTest do
+defmodule RemoveDuplicatesTest do
   use ExUnit.Case
 
   test "sequential implementation removes duplicates correctly" do
