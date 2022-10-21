@@ -43,7 +43,6 @@ defmodule Mix.Tasks.Benchmark do
         "serial",
         "actors",
         "dc",
-        "dc_fast"
       ]),
       "word_count" => MapSet.new([
         "serial",

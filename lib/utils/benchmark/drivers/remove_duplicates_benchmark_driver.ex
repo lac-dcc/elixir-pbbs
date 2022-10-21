@@ -17,9 +17,9 @@ defmodule Utils.RemoveDuplicatesBenchmarkDriver do
       "large list, p=4" => {large_list, 4},
       "large list, p=6" => {large_list, 6},
       "large list, p=12" => {large_list, 12},
-      #"large list, p=24" => {large_list, 24},
-      #"large list, p=32" => {large_list, 32},
-      #"large list, p=40" => {large_list, 40},
+      "large list, p=24" => {large_list, 24},
+      "large list, p=32" => {large_list, 32},
+      "large list, p=40" => {large_list, 40},
     }
 
     to_run = Enum.filter(impl_map, fn ({key, _value}) ->
