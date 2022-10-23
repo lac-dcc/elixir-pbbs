@@ -1,11 +1,7 @@
 defmodule Sequences.Histogram.Parallel.DivideAndConquer do
 
   def histogram(nums, buckets, p) do
-    result = List.duplicate(0, buckets)
-    |> Enum.with_index
-    |> Enum.map(fn ({k, v}) -> ({v, k}) end)
-    |> Map.new
-    map = (0..p-1)
+    tasks = (0..p-1)
     |> Enum.map(fn i ->
       Task.async(fn ->
         Enum.drop(nums, i)
@@ -13,7 +9,13 @@ defmodule Sequences.Histogram.Parallel.DivideAndConquer do
         |> Enum.frequencies
       end)
     end)
-    |> Task.await_many
+
+    result = List.duplicate(0, buckets)
+    |> Enum.with_index
+    |> Enum.map(fn ({k, v}) -> ({v, k}) end)
+    |> Map.new
+
+    map = Task.await_many(tasks)
     |> Enum.reduce(%{}, fn (res, acc) ->
       Map.merge(res, acc, fn (_key, v1, v2) -> v1 + v2 end)
     end)
