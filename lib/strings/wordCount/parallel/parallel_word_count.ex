@@ -1,10 +1,9 @@
 defmodule Strings.WordCount.Parallel do
   def word_count(string, p) do
-    words = String.split(string)
-
     (0..p-1)
     |> Enum.map(fn i ->
       Task.async(fn ->
+        words = String.split(string)
         Enum.drop(words, i)
         |> Enum.take_every(p)
         |> Enum.frequencies
