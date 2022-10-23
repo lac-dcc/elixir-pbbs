@@ -6,8 +6,12 @@ defmodule Sequences.Histogram do
   def frequencies(nums, buckets) do
     map = Enum.frequencies(nums)
     result = List.duplicate(0, buckets)
-    Enum.reduce(map, result, fn (el, acc) ->
-      List.update_at(acc, elem(el, 0), fn _val -> Map.get(map, elem(el, 0), 0) end)
-    end)
+    |> Enum.with_index
+    |> Enum.map(fn ({k, v}) -> ({v, k}) end)
+    |> Map.new
+
+    Map.merge(result, map)
+    |> Enum.to_list
+    |> Enum.map(fn ({_k, v}) -> v end)
   end
 end
