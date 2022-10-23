@@ -5,14 +5,19 @@ defmodule Utils.WordCountBenchmarkDriver do
     IO.inspect(implementations)
 
     impl_map = %{
-      "serial" => fn ({data, _p}) -> Strings.WordCount.word_count(data) end,
+      "serial" => fn ({data, p}) ->
+        if p == 2 do
+          Strings.WordCount.word_count(data)
+        else
+          IO.puts("skipping serial benchmark for p=#{p}")
+        end
+      end,
       "parallel" => fn ({data, p}) -> Strings.WordCount.Parallel.word_count(data, p) end,
     }
 
     {:ok, text} = File.read("text.txt")
 
     inputs = %{
-      "text, p=1" => {text, 1},
       "text, p=2" => {text, 2},
       "text, p=4" => {text, 4},
       "text, p=6" => {text, 6},

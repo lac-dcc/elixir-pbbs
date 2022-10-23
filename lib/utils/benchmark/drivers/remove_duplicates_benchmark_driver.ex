@@ -4,14 +4,19 @@ defmodule Utils.RemoveDuplicatesBenchmarkDriver do
     IO.inspect(implementations)
 
     impl_map = %{
-      "serial" => fn ({data, _p}) -> Sequences.RemoveDuplicates.remove_duplicates(data) end,
+      "serial" => fn ({data, p}) ->
+        if p == 2 do
+          Sequences.RemoveDuplicates.remove_duplicates(data)
+        else
+          IO.puts("skipping serial benchmark for p=#{p}")
+        end
+      end,
       "parallel" => fn ({data, p}) -> Sequences.RemoveDuplicates.Parallel.DivideAndConquer.remove_duplicates(data, p) end,
     }
 
-    large_list = Utils.Generators.random_sequence(10_000, 100_000)
+    large_list = Utils.Generators.random_sequence(400_000, 100_000)
 
     inputs = %{
-      "large list, p=1" => {large_list, 1},
       "large list, p=2" => {large_list, 2},
       "large list, p=4" => {large_list, 4},
       "large list, p=6" => {large_list, 6},
