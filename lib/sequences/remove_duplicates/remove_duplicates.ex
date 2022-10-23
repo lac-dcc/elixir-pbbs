@@ -1,5 +1,6 @@
 defmodule Sequences.RemoveDuplicates do
   def remove_duplicates(nums) do
-    Enum.uniq(nums)
+    MapSet.new(nums)
+    |> Enum.to_list
   end
 end
