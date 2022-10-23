@@ -5,13 +5,7 @@ defmodule Utils.WordCountBenchmarkDriver do
     IO.inspect(implementations)
 
     impl_map = %{
-      "serial" => fn ({data, p}) ->
-        if p == 2 do
-          Strings.WordCount.word_count(data)
-        else
-          IO.puts("skipping serial benchmark for p=#{p}")
-        end
-      end,
+      "serial" => fn ({data, _p}) -> Strings.WordCount.word_count(data) end,
       "parallel" => fn ({data, p}) -> Strings.WordCount.Parallel.word_count(data, p) end,
     }
 

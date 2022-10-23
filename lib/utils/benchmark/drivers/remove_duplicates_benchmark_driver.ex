@@ -4,13 +4,7 @@ defmodule Utils.RemoveDuplicatesBenchmarkDriver do
     IO.inspect(implementations)
 
     impl_map = %{
-      "serial" => fn ({data, p}) ->
-        if p == 2 do
-          Sequences.RemoveDuplicates.remove_duplicates(data)
-        else
-          IO.puts("skipping serial benchmark for p=#{p}")
-        end
-      end,
+      "serial" => fn ({data, _p}) -> Sequences.RemoveDuplicates.remove_duplicates(data) end,
       "parallel" => fn ({data, p}) -> Sequences.RemoveDuplicates.Parallel.DivideAndConquer.remove_duplicates(data, p) end,
     }
 

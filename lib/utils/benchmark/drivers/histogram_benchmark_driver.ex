@@ -5,13 +5,7 @@ defmodule Utils.HistogramBenchmarkDriver do
     buckets = 1000
 
     impl_map = %{
-      "serial" => fn ({data, p}) ->
-        if p == 2 do
-          Sequences.Histogram.histogram(data, buckets)
-        else
-          IO.puts("skipping serial benchmark for p=#{p}")
-        end
-      end,
+      "serial" => fn ({data, _p}) -> Sequences.Histogram.histogram(data, buckets) end,
       "actors" => fn ({data, _p}) -> Sequences.Histogram.Parallel.histogram(data, buckets) end,
       "dc" => fn ({data, p}) -> Sequences.Histogram.Parallel.DivideAndConquer.histogram(data, buckets, p) end,
     }
