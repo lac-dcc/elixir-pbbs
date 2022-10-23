@@ -7,7 +7,7 @@ defmodule Sequences.Histogram.Parallel.DivideAndConquer do
       Task.async(fn ->
         Enum.drop(nums, i)
         |> Enum.take_every(p)
-        |> frequencies
+        |> Enum.frequencies
       end)
     end)
     |> Task.await_many
@@ -16,12 +16,6 @@ defmodule Sequences.Histogram.Parallel.DivideAndConquer do
     end)
     |> Enum.reduce(result_list, fn (el, acc) ->
       List.update_at(acc, elem(el, 0), fn _val -> elem(el, 1) end)
-    end)
-  end
-
-  def frequencies(nums) do
-    Enum.reduce(nums, %{}, fn (el, acc) ->
-      Map.update(acc, el, 1, fn v -> v+1 end)
     end)
   end
 end
