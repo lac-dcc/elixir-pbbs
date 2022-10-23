@@ -5,9 +5,9 @@ defmodule Utils.HistogramBenchmarkDriver do
     buckets = 1000
 
     impl_map = %{
-      "serial" => fn ({data, _p}) -> Sequences.Histogram.histogram(data, buckets) end,
-      "actors" => fn ({data, _p}) -> Sequences.Histogram.Parallel.histogram(data, buckets) end,
-      "dc" => fn ({data, p}) -> Sequences.Histogram.Parallel.DivideAndConquer.histogram(data, buckets, p) end,
+      "serial" => fn ({data, _p}) ->Sequences.Histogram.histogram(Enum.shuffle(data), buckets) end,
+      "actors" => fn ({data, _p}) -> Sequences.Histogram.Parallel.histogram(Enum.shuffle(data), buckets) end,
+      "dc" => fn ({data, p}) -> Sequences.Histogram.Parallel.DivideAndConquer.histogram(Enum.shuffle(data), buckets, p) end,
     }
 
     large_list = Utils.Generators.random_sequence(buckets, 1_000_000)

@@ -4,8 +4,8 @@ defmodule Utils.RemoveDuplicatesBenchmarkDriver do
     IO.inspect(implementations)
 
     impl_map = %{
-      "serial" => fn ({data, _p}) -> Sequences.RemoveDuplicates.remove_duplicates(data) end,
-      "parallel" => fn ({data, p}) -> Sequences.RemoveDuplicates.Parallel.DivideAndConquer.remove_duplicates(data, p) end,
+      "serial" => fn ({data, _p}) -> Sequences.RemoveDuplicates.remove_duplicates(Enum.shuffle(data)) end,
+      "parallel" => fn ({data, p}) -> Sequences.RemoveDuplicates.Parallel.DivideAndConquer.remove_duplicates(Enum.shuffle(data), p) end,
     }
 
     large_list = Utils.Generators.random_sequence(400_000, 100_000)

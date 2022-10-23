@@ -51,7 +51,6 @@ defmodule Mix.Tasks.Benchmark do
       "remove_duplicates" => MapSet.new([
         "serial",
         "parallel",
-        "fast_parallel"
       ]),
     }
     drivers = %{

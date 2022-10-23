@@ -1,10 +1,13 @@
 defmodule Sequences.Histogram.Parallel.DivideAndConquer do
 
   def histogram(nums, buckets, p) do
+    :ets.new(:histogram, [:public, :named_table])
+    :ets.insert(:histogram, {:data, nums})
+
     tasks = (0..p-1)
     |> Enum.map(fn i ->
       Task.async(fn ->
-        Enum.drop(nums, i)
+        Enum.drop(Keyword.get(:ets.lookup(:histogram, :data), :data), i)
         |> Enum.take_every(p)
         |> Enum.frequencies
       end)
@@ -19,6 +22,8 @@ defmodule Sequences.Histogram.Parallel.DivideAndConquer do
     |> Enum.reduce(%{}, fn (res, acc) ->
       Map.merge(res, acc, fn (_key, v1, v2) -> v1 + v2 end)
     end)
+
+    :ets.delete(:histogram)
 
     Map.merge(result, map)
     |> Enum.to_list
