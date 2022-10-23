@@ -8,7 +8,7 @@ defmodule Utils.RemoveDuplicatesBenchmarkDriver do
       "parallel" => fn ({data, p}) -> Sequences.RemoveDuplicates.Parallel.DivideAndConquer.remove_duplicates(data, p) end,
     }
 
-    large_list = Utils.Generators.random_sequence(1_000_000)
+    large_list = Utils.Generators.random_sequence(10_000, 100_000)
 
     inputs = %{
       "large list, p=1" => {large_list, 1},

@@ -1,16 +1,18 @@
 defmodule Sequences.RemoveDuplicates.Parallel.DivideAndConquer do
   def remove_duplicates(nums, p) do
-    (0..p-1)
+    ret=(0..p-1)
     |> Enum.map(fn i ->
       Task.async(fn ->
         Enum.drop(nums, i)
         |> Enum.take_every(p)
-        |> Enum.uniq
+        |> MapSet.new
       end)
     end)
     |> Task.await_many
-    |> Enum.reduce([], fn (res, acc) ->
-      Enum.uniq(acc ++ res)
+    |> Enum.reduce(MapSet.new(), fn (res, acc) ->
+      MapSet.union(res, acc)
     end)
+
+    Enum.to_list(ret)
   end
 end
