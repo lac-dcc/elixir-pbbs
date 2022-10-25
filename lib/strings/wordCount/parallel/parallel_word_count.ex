@@ -11,11 +11,13 @@ defmodule Strings.WordCount.Parallel do
         |> Enum.drop(i)
         |> Enum.take_every(p)
         |> Enum.frequencies
+        |> Enum.to_list
       end)
     end)
     |> Task.await_many(:infinity)
-    |> Enum.reduce(%{}, fn (res, acc) ->
-      Map.merge(res, acc, fn (_key, v1, v2) -> v1 + v2 end)
+    |> :lists.append
+    |> Enum.reduce(%{}, fn (({k, v}), acc) ->
+      Map.update(acc, k, v, fn old -> old + v end)
     end)
 
     :ets.delete(:wc)
