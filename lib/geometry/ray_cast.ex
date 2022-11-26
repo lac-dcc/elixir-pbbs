@@ -60,7 +60,7 @@ defmodule Geometry.RayCast do
       String.split(line)
       |> Enum.map(&String.to_float/1)
 
-    %Geometry.Point3d{x: x, y: y, z: z}
+    %Geometry.Vec3{x: x, y: y, z: z}
   end
 
   defp create_triangle_from_line(line, indexed_points) do
