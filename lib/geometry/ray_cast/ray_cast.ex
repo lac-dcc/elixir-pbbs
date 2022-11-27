@@ -1,8 +1,6 @@
 defmodule Geometry.RayCast do
   alias Geometry.Vec3
-  def ray_cast(triangles_file_path, rays_file_path) do
-    {triangles, rays} = Geometry.RayCast.ReadInput.read_input(triangles_file_path, rays_file_path)
-
+  def ray_cast(triangles, rays) do
     indexed_triangles = Enum.with_index(triangles)
 
     result = Enum.map(rays, fn ray ->

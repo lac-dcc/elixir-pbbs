@@ -1,8 +1,6 @@
 defmodule Geometry.RayCast.Parallel.ParallelRayCast do
-  def ray_cast(triangles_file_path, rays_file_path) do
+  def ray_cast(triangles, rays) do
     p = 11
-
-    {triangles, rays} = Geometry.RayCast.ReadInput.read_input(triangles_file_path, rays_file_path)
 
     :ets.new(:rc, [:public, :named_table])
     indexed_triangles = Enum.with_index(triangles)
