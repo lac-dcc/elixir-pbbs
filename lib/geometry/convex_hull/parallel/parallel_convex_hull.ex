@@ -8,11 +8,11 @@ defmodule Geometry.ConvexHull.ConvexHull.Parallel do
     [min_x, max_x] = Task.await_many([
       Task.async(fn ->
         pts = Keyword.get(:ets.lookup(:ch, :points), :points)
-        Enum.min_by(pts, fn ({point, _idx}) -> point.x end)
+        Enum.min_by(pts, fn ({{x, _y}, _idx}) -> x end)
       end),
       Task.async(fn ->
         pts = Keyword.get(:ets.lookup(:ch, :points), :points)
-        Enum.max_by(pts, fn ({point, _idx}) -> point.x end)
+        Enum.max_by(pts, fn ({{x, _y}, _idx}) -> x end)
       end),
     ])
 
@@ -67,7 +67,7 @@ defmodule Geometry.ConvexHull.ConvexHull.Parallel do
     end
   end
 
-  def cross_product(o, v, w) do
-    (v.x - o.x) * (w.y - o.y) - (v.y - o.y) * (w.x - o.x)
+  def cross_product({ox, oy}, {vx, vy}, {wx, wy}) do
+    (vx - ox) * (wy - oy) - (vy - oy) * (wx - ox)
   end
 end
