@@ -1,14 +1,12 @@
 defmodule Geometry.RayCast.Parallel.ParallelRayCast do
-  def ray_cast(triangles, rays) do
-    p = 11
-
+  def ray_cast(triangles, rays, p) do
     :ets.new(:rc, [:public, :named_table])
     indexed_triangles = Enum.with_index(triangles)
     :ets.insert(:rc, {:triangles, indexed_triangles})
     :ets.insert(:rc, {:rays, rays})
 
-    size = ceil(length(rays) / p)
-    result = (0..p)
+    size = ceil(length(rays) / (p-1))
+    result = (0..p-1)
     |> Enum.map(fn idx -> (idx*size) end)
     |> Enum.map(fn start ->
       Task.async(fn ->

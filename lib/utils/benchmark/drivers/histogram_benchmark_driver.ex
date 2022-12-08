@@ -1,36 +1,27 @@
 defmodule Utils.HistogramBenchmarkDriver do
 
-  def run_benchmark(implementations, processors) do
-    IO.inspect(implementations)
-    buckets = 1000
+  def run_benchmark() do
+    dense_buckets = 1000
+    dense_list = Utils.Generators.random_sequence(dense_buckets, 1_000_000)
 
-    impl_map = %{
-      "serial" => fn ({data, _p}) ->Sequences.Histogram.histogram(data, buckets) end,
-      "actors" => fn ({data, _p}) -> Sequences.Histogram.Parallel.histogram(data, buckets) end,
-      "dc" => fn ({data, p}) -> Sequences.Histogram.Parallel.DivideAndConquer.histogram(data, buckets, p) end,
-    }
+    sparse_buckets = 500_000
+    sparse_list = Utils.Generators.random_sequence(sparse_buckets, 1_000_000)
 
-    large_list = Utils.Generators.random_sequence(buckets, 1_000_000)
+    plist = [2, 4, 6, 12, 24, 32, 40]
 
-    inputs = %{
-      "large list, p=2" => {large_list, 2},
-      "large list, p=4" => {large_list, 4},
-      "large list, p=6" => {large_list, 6},
-      "large list, p=12" => {large_list, 12},
-      "large list, p=24" => {large_list, 24},
-      "large list, p=32" => {large_list, 32},
-      "large list, p=40" => {large_list, 40},
-    }
-
-    to_run = Enum.filter(impl_map, fn ({key, _value}) ->
-      IO.puts(key)
-      MapSet.member?(implementations, key)
+    impl_map = Enum.flat_map(plist, fn p ->
+      [
+        {"parallel;p=#{p};sparse_list", fn () -> Sequences.Histogram.Parallel.DivideAndConquer.histogram(sparse_list, sparse_buckets, p) end},
+        {"parallel;p=#{p};dense_list", fn () -> Sequences.Histogram.Parallel.DivideAndConquer.histogram(dense_list, dense_buckets, p) end},
+      ]
     end)
+    |> Map.new()
+    |> Map.put("serial;sparse_list", fn () -> Sequences.Histogram.histogram(sparse_list, sparse_buckets) end)
+    |> Map.put("serial;dense_list", fn () -> Sequences.Histogram.histogram(dense_list, dense_buckets) end)
 
     Benchee.run(
-      to_run,
-      time: 30,
-      inputs: inputs,
+      impl_map,
+      time: 60,
       formatters: [
         {Benchee.Formatters.CSV, file: "output_histogram.csv"}
       ]

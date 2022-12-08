@@ -1,35 +1,24 @@
 defmodule Utils.WordCountBenchmarkDriver do
 
-  def run_benchmark(implementations, processors) do
-    Strings.WordCount.Parallel
-    IO.inspect(implementations)
+  def run_benchmark() do
+    {:ok, natural_text} = File.read("data/inputs/word_count/text.txt")
+    {:ok, dense_text} = File.read("data/inputs/word_count/dense_text.txt")
 
-    impl_map = %{
-      "serial" => fn ({data, _p}) -> Strings.WordCount.word_count(data) end,
-      "parallel" => fn ({data, p}) -> Strings.WordCount.Parallel.word_count(data, p) end,
-    }
+    plist = [2, 4, 6, 12, 24, 32, 40]
 
-    {:ok, text} = File.read("text.txt")
-
-    inputs = %{
-      "text, p=2" => {text, 2},
-      "text, p=4" => {text, 4},
-      "text, p=6" => {text, 6},
-      "text, p=12" => {text, 12},
-      "text, p=24" => {text, 24},
-      "text, p=32" => {text, 32},
-      "text, p=40" => {text, 40},
-    }
-
-    to_run = Enum.filter(impl_map, fn ({key, _value}) ->
-      IO.puts(key)
-      MapSet.member?(implementations, key)
+    impl_map = Enum.flat_map(plist, fn p ->
+      [
+        {"parallel;p=#{p};natural_text", fn () -> Strings.WordCount.Parallel.word_count(natural_text, p) end},
+        {"parallel;p=#{p};dense_text", fn () -> Strings.WordCount.Parallel.word_count(dense_text, p) end},
+      ]
     end)
+    |> Map.new()
+    |> Map.put("serial;natural_text", fn () -> Strings.WordCount.word_count(natural_text) end)
+    |> Map.put("serial;dense_text", fn () -> Strings.WordCount.word_count(dense_text) end)
 
     Benchee.run(
-      to_run,
-      time: 30,
-      inputs: inputs,
+      impl_map,
+      time: 60,
       formatters: [
         {Benchee.Formatters.CSV, file: "output_wc.csv"}
       ]

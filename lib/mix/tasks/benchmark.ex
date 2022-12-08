@@ -6,9 +6,6 @@ defmodule Mix.Tasks.Benchmark do
 
     Parameters:
     --algorithm (-a) - the algorithm to benchmark (required)
-    --impl (-i) - the implementations that must be included in the benchmark. Default: all available implementations.
-    --processors (-p) - the number of processors to use. This parameter will be forwarded to the algorithms
-      whose level of parallelism is configurable. Default: System.schedulers
   """
 
   use Mix.Task
@@ -17,55 +14,34 @@ defmodule Mix.Tasks.Benchmark do
   def run(args) do
     parsed_args = OptionParser.parse(args, aliases: [
       a: :algorithm,
-      i: :impl,
-      p: :processors
     ], strict: [
       algorithm: :string,
-      impl: :keep,
-      processors: :integer
     ])
     parsed = elem(parsed_args, 0)
 
-    processors = Keyword.get(parsed, :processors, System.schedulers())
     algorithm = Keyword.get(parsed, :algorithm)
-    implementations = Keyword.get_values(parsed, :impl)
 
     if algorithm == nil do
       usage()
     else
-      execute(algorithm, implementations, processors)
+      execute(algorithm)
     end
   end
 
-  defp execute(algorithm, implementations, processors) do
-    impl_map = %{
-      "histogram" => MapSet.new([
-        "serial",
-        "actors",
-        "dc",
-      ]),
-      "word_count" => MapSet.new([
-        "serial",
-        "parallel",
-      ]),
-      "remove_duplicates" => MapSet.new([
-        "serial",
-        "parallel",
-      ]),
-    }
+  defp execute(algorithm) do
     drivers = %{
-      "histogram" => &Utils.HistogramBenchmarkDriver.run_benchmark/2,
-      "word_count" => &Utils.WordCountBenchmarkDriver.run_benchmark/2,
-      "remove_duplicates" => &Utils.RemoveDuplicatesBenchmarkDriver.run_benchmark/2,
+      "histogram" => &Utils.HistogramBenchmarkDriver.run_benchmark/0,
+      "word_count" => &Utils.WordCountBenchmarkDriver.run_benchmark/0,
+      "remove_duplicates" => &Utils.RemoveDuplicatesBenchmarkDriver.run_benchmark/0,
+      "ray_cast" => &Utils.RayCastBenchmarkDriver.run_benchmark/0,
+      "convex_hull" => &Utils.ConvexHullBenchmarkDriver.run_benchmark/0,
     }
 
-    available_implementations = impl_map[algorithm]
-    if implementations == [] do
-      implementations = available_implementations
-      drivers[algorithm].(implementations, processors)
+    driver = drivers[algorithm]
+    if driver != nil do
+      driver.()
     else
-      implementations = MapSet.intersection(MapSet.new(implementations), available_implementations)
-      drivers[algorithm].(implementations, processors)
+      IO.puts("Unknown algorithm: #{algorithm}")
     end
   end
 
