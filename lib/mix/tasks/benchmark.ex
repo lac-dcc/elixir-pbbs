@@ -35,6 +35,9 @@ defmodule Mix.Tasks.Benchmark do
       "remove_duplicates" => &Utils.RemoveDuplicatesBenchmarkDriver.run_benchmark/0,
       "ray_cast" => &Utils.RayCastBenchmarkDriver.run_benchmark/0,
       "convex_hull" => &Utils.ConvexHullBenchmarkDriver.run_benchmark/0,
+      "suffix_array" => &Utils.SuffixArrayBenchmarkDriver.run_benchmark/0,
+      "integer_sort" => &Utils.IntegerSortBenchmarkDriver.run_benchmark/0,
+      "comparison_sort" => &Utils.ComparisonSortBenchmarkDriver.run_benchmark/0,
     }
 
     driver = drivers[algorithm]

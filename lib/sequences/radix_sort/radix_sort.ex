@@ -15,28 +15,23 @@ defmodule Sequences.RadixSort do
     end
   end
 
-  defp radix_sort(list) do
+  def radix_sort(list) do
     max = abs(Utils.Lists.max(list))
     max_length = length(Integer.digits(max))
 
     string_list =
       Enum.map(list, fn item -> String.pad_leading(Integer.to_string(item), max_length, "0") end)
 
-    {elapsed_time, sorted_string} =
-      :timer.tc(fn -> List.flatten(radix_sort(string_list, 10, 0, max_length)) end)
+    sorted_string = List.flatten(radix_sort(string_list, 10, 0, max_length))
 
     sorted = Enum.map(sorted_string, fn item -> String.to_integer(item) end)
 
-    # IO.puts("\nSorted sequence: ")
-    # Utils.Lists.print(sorted)
-    # IO.puts("Elapsed time: #{elapsed_time / 1_000_000} s\n")
-    IO.puts(elapsed_time / 1_000_000)
     sorted
   end
 
-  defp radix_sort(list, _, digit, rank) when digit == rank, do: list
+  def radix_sort(list, _, digit, rank) when digit == rank, do: list
 
-  defp radix_sort(list, base, digit, rank) do
+  def radix_sort(list, base, digit, rank) do
     buckets =
       get_buckets(list, base, digit)
       |> Tuple.to_list()
