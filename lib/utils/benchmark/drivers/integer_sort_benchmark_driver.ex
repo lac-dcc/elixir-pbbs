@@ -4,14 +4,17 @@ defmodule Utils.IntegerSortBenchmarkDriver do
     dense_list = Utils.Generators.random_sequence(50, 1_000_000)
     sparse_list = Utils.Generators.random_sequence(1_000_000)
 
-    p = System.schedulers_online()
+    plist = [2, 4, 6, 12, 24, 32, 40]
 
-    impl_map = Map.new()
+    impl_map = Enum.flat_map(plist, fn p ->
+      [
+        {"parallel;p=#{p};dense_list", fn () -> Sequences.OptimizedRadixSort.radix_sort(dense_list, p) end},
+        {"parallel;p=#{p};sparse_list", fn () -> Sequences.OptimizedRadixSort.radix_sort(sparse_list, p) end},
+      ]
+    end)
+    |> Map.new()
     |> Map.put("serial;dense_list", fn () -> Enum.sort(dense_list) end)
     |> Map.put("serial;sparse_list", fn () -> Enum.sort(sparse_list) end)
-    |> Map.put("parallel;p=#{p};dense_list", fn () -> Sequences.RadixSort.radix_sort(dense_list) end)
-    |> Map.put("parallel;p=#{p};sparse_list", fn () -> Sequences.RadixSort.radix_sort(sparse_list) end)
-    |> Map.new()
 
     Benchee.run(
       impl_map,

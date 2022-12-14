@@ -22,14 +22,14 @@ echo "Container id: $container_id"
 #docker exec -it "$container_id" sh -c "mix benchmark -a convex_hull"
 #docker cp "$container_id":/app/output_convex_hull.csv experiments_results/output_convex_hull.csv
 
-docker exec -it "$container_id" sh -c "mix benchmark -a suffix_array"
-docker cp "$container_id":/app/output_suffix_array.csv experiments_results/output_suffix_array.csv
+#docker exec -it "$container_id" sh -c "mix benchmark -a suffix_array"
+#docker cp "$container_id":/app/output_suffix_array.csv experiments_results/output_suffix_array.csv
 
 docker exec -it "$container_id" sh -c "mix benchmark -a integer_sort"
 docker cp "$container_id":/app/output_integer_sort.csv experiments_results/output_integer_sort.csv
 
-docker exec -it "$container_id" sh -c "mix benchmark -a comparison_sort"
-docker cp "$container_id":/app/output_comparison_sort.csv experiments_results/output_comparison_sort.csv
+#docker exec -it "$container_id" sh -c "mix benchmark -a comparison_sort"
+#docker cp "$container_id":/app/output_comparison_sort.csv experiments_results/output_comparison_sort.csv
 
 echo "Experiments done, killing container $container_id..."
 docker kill "$container_id"
