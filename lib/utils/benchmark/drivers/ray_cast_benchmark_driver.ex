@@ -1,16 +1,16 @@
 defmodule Utils.RayCastBenchmarkDriver do
   def run_benchmark() do
-    {triangles, rays} = Geometry.RayCast.ReadInput.read_input("data/inputs/ray_cast/angelTrianglesCapped", "data/inputs/ray_cast/rays")
+    {triangles, rays} = Geometry.RayCast.ReadInput.read_input("data/inputs/ray_cast/triangles2k", "data/inputs/ray_cast/rays2k")
 
     plist = [2, 4, 6, 12, 24, 32, 40]
 
     impl_map = Enum.flat_map(plist, fn p ->
       [
-        {"parallel;p=#{p};angelTriangles", fn () -> Geometry.RayCast.Parallel.ParallelRayCast.ray_cast(triangles, rays, p) end},
+        {"parallel;p=#{p};default", fn () -> Geometry.RayCast.Parallel.ParallelRayCast.ray_cast(triangles, rays, p) end},
       ]
     end)
     |> Map.new()
-    |> Map.put("serial;angelTriangles", fn () -> Geometry.RayCast.ray_cast(triangles, rays) end)
+    |> Map.put("serial;default", fn () -> Geometry.RayCast.ray_cast(triangles, rays) end)
 
     Benchee.run(
       impl_map,
