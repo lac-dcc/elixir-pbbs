@@ -1,4 +1,0 @@
-# Ignore everything in this directory
-10000000.txt
-# Except this file
-!.gitignore

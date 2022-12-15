@@ -7,9 +7,6 @@ BSc in Computer Science - [Universidade Federal de Minas Gerais](https://ufmg.br
 ### Student
 Luiz Berto
 
-### Presentation
-TODO
-
 ## Goal
 
 Rewrite the [Problem-Based Benchmark Suite](https://www.cs.cmu.edu/~pbbs/benchmarks.html) in [Elixir](https://elixir-lang.org/).
@@ -17,73 +14,39 @@ Rewrite the [Problem-Based Benchmark Suite](https://www.cs.cmu.edu/~pbbs/benchma
 This work was started by [Jean George](https://github.com/jeangeorge) and continued by [Luiz Berto](https://github.com/luiz787).
 
 ## To run
-First one, install and configure Elixir (and Erlang!) on your operating system following [this](https://elixir-lang.org/install.html) tutorial.
 
-Then clone this repo
-```bash
-$ git clone https://github.com/lac-dcc/elixir-pbbs
-```
-And go to the folder
-```bash
-$ cd elixir-pbbs
-```
-We create the structure with [Mix](https://hexdocs.pm/mix/Mix.html) and make use of it's [escripts](https://hexdocs.pm/mix/master/Mix.Tasks.Escript.Build.html) for command line executables. So, to get the dependencies run
-```bash
-$ mix deps.get
-```
-After that, build the project
-```bash
-$ mix escript.build
-```
-And run one of our methods
-```bash
-$ escript pbbs [method_name] [methods_params]
-```
-Both in the root folder, to run one of the methods. See examples of how to run each method below.
+Install and configure Elixir 1.14+, Erlang 24+ on your machine.
+Alternatively, you can use Docker to build an image with all the dependencies and the code, as defined in `Dockerfile`. For example (extracted from `run_benchmarks.sh`):
 
-## Methods
-Our methods follow PBBS [specifications](https://www.cs.cmu.edu/~pbbs/benchmarks.html), including [inputs](https://www.cs.cmu.edu/~pbbs/inputs.html).
-
-### Radix Sort
-Radix Sort it's our implementation for the [Integer Sort](https://www.cs.cmu.edu/~pbbs/benchmarks/integerSort.html). So, run
 ```bash
-$ escript pbbs RadixSort p file_location
+docker build . -t elixir-pbbs
+image_id=$(docker images | awk '{print $3}' | awk 'NR==2')
+
+container_id=$(docker run -d -it "$image_id" /bin/bash)
+docker exec -it "$container_id" sh -c "mix benchmark -a histogram"
 ```
-Where file_location is a file containing a sequence of integers in [PBBS format](https://www.cs.cmu.edu/~pbbs/benchmarks/sequenceIO.html). You can use a local file or a valid URL acessible via GET request
+
+Benchmarks are executed with the `mix benchmark` task. To execute a benchmark:
+
 ```bash
-$ escript pbbs RadixSort p dir/to/my/file.txt
-$ escript pbbs RadixSort p https://myapi.com/my/file.txt
+mix benchmark -a <algorithm>
 ```
-or
-```bash
-$ escript pbbs RadixSort p [m] n
-```
-To sort n integer values in a range [0, m] randomly generated. m it'optional, if not provided, m = n.
 
-For both cases, p is the number of workers.
+Currently implemented algorithms:
 
-### Sample Sort
-Sample Sort it's our implementation for the [Comparison Sort](https://www.cs.cmu.edu/~pbbs/benchmarks/comparisonSort.html). So, run
-```bash
-$ escript pbbs SampleSort p ll file_location
-```
-Where file_location is a file containing a sequence of integers, floats or strings in [PBBS format](https://www.cs.cmu.edu/~pbbs/benchmarks/sequenceIO.html). You can use a local file or a valid URL acessible via GET request
-```bash
-$ escript pbbs SampleSort p ll dir/to/my/file.txt
-$ escript pbbs SampleSort p ll https://myapi.com/my/file.txt
-```
-or
-```bash
-$ escript pbbs SampleSort p ll [m] n
-```
-To sort n values in a range [0, m] randomly generated. m it'optional, if not provided, m = n.
+- `histogram` - [https://cmuparlay.github.io/pbbsbench/benchmarks/histogram.html](https://cmuparlay.github.io/pbbsbench/benchmarks/histogram.html)
+- `word_count` - [https://cmuparlay.github.io/pbbsbench/benchmarks/wordCounts.html](https://cmuparlay.github.io/pbbsbench/benchmarks/wordCounts.html)
+- `remove_duplicates`- no PBBS page :(
+- `ray_cast` - [https://cmuparlay.github.io/pbbsbench/benchmarks/rayCast.html](https://cmuparlay.github.io/pbbsbench/benchmarks/rayCast.html)
+- `convex_hull` - [https://cmuparlay.github.io/pbbsbench/benchmarks/convexHull.html](https://cmuparlay.github.io/pbbsbench/benchmarks/convexHull.html)
+- `suffix_array` - [https://cmuparlay.github.io/pbbsbench/benchmarks/suffixArray.html](https://cmuparlay.github.io/pbbsbench/benchmarks/suffixArray.html)
+- `integer_sort` - [https://cmuparlay.github.io/pbbsbench/benchmarks/integerSort.html](https://cmuparlay.github.io/pbbsbench/benchmarks/integerSort.html)
+- `comparison_sort` - [https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html](https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html)
 
-For both cases, p is the number of workers and ll it's the lower limit used by the algoritm.
 
-### Suffix array
+Each benchmark has a number of different, preselected inputs, to exercise different communication patterns in the parallel implementations. Each benchmark compares the parallel implementation with the sequential implementation for a given problem, given the same inputs. Each implementation-input pair executes for 60 seconds, plus 2s for warmup.
 
-The suffix array implementation is in progress, and it is based on [Apostolico, Iliopoulos, Landau, Schieber and Vishkin's algorithm](https://dl.acm.org/doi/10.1145/195058.195162).
-
+Benchmarks output a CSV file with detailed runtime information to the current directory. Currently, the benchmarks are not parameterizable, so feel free to change the code in `utils/benchmarks/drivers/*` if necessary.
 
 ## License
 

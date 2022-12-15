@@ -1,4 +1,4 @@
-defmodule Utils.IntegerSortBenchmarkDriver do
+defmodule Utils.Benchmark.Drivers.IntegerSort do
 
   def run_benchmark() do
     dense_list = Utils.Generators.random_sequence(50, 1_000_000)
@@ -8,8 +8,8 @@ defmodule Utils.IntegerSortBenchmarkDriver do
 
     impl_map = Enum.flat_map(plist, fn p ->
       [
-        {"parallel;p=#{p};dense_list", fn () -> Sequences.OptimizedRadixSort.radix_sort(dense_list, p) end},
-        {"parallel;p=#{p};sparse_list", fn () -> Sequences.OptimizedRadixSort.radix_sort(sparse_list, p) end},
+        {"parallel;p=#{p};dense_list", fn () -> PBBS.Sequences.IntegerSort.Parallel.radix_sort(dense_list, p) end},
+        {"parallel;p=#{p};sparse_list", fn () -> PBBS.Sequences.IntegerSort.Parallel.radix_sort(sparse_list, p) end},
       ]
     end)
     |> Map.new()

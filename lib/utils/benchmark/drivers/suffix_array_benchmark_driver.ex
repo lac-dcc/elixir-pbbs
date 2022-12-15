@@ -1,4 +1,4 @@
-defmodule Utils.SuffixArrayBenchmarkDriver do
+defmodule Utils.Benchmark.Drivers.SuffixArray do
 
   def run_benchmark() do
     {:ok, trigrams} = File.read("data/inputs/suffix_array/trigrams")
@@ -8,13 +8,13 @@ defmodule Utils.SuffixArrayBenchmarkDriver do
 
     impl_map = Enum.flat_map(plist, fn p ->
       [
-        {"parallel;p=#{p};trigrams", fn () -> NaiveParallelSuffixArray.suffix_array(trigrams, p) end},
-        {"parallel;p=#{p};dna", fn () -> NaiveParallelSuffixArray.suffix_array(dna, p) end},
+        {"parallel;p=#{p};trigrams", fn () -> PBBS.Strings.SuffixArray.Parallel.suffix_array(trigrams, p) end},
+        {"parallel;p=#{p};dna", fn () -> PBBS.Strings.SuffixArray.Parallel.suffix_array(dna, p) end},
       ]
     end)
     |> Map.new()
-    |> Map.put("serial;trigrams", fn () -> SequentialSuffixArray.suffix_array(trigrams) end)
-    |> Map.put("serial;dna", fn () -> SequentialSuffixArray.suffix_array(dna) end)
+    |> Map.put("serial;trigrams", fn () -> PBBS.Strings.SuffixArray.Sequential.suffix_array(trigrams) end)
+    |> Map.put("serial;dna", fn () -> PBBS.Strings.SuffixArray.Sequential.suffix_array(dna) end)
 
     Benchee.run(
       impl_map,

@@ -1,4 +1,4 @@
-defmodule Utils.ConvexHullBenchmarkDriver do
+defmodule Utils.Benchmark.Drivers.ConvexHull do
   def run_benchmark() do
     uniform = read_points("data/inputs/convex_hull/uniform.txt")
     kuzmin = read_points("data/inputs/convex_hull/kuzmin.txt")
@@ -7,12 +7,12 @@ defmodule Utils.ConvexHullBenchmarkDriver do
     p = System.schedulers_online()
 
     impl_map = Map.new()
-    |> Map.put("serial;uniform", fn () -> Geometry.ConvexHull.ConvexHull.convex_hull(uniform) end)
-    |> Map.put("serial;kuzmin", fn () -> Geometry.ConvexHull.ConvexHull.convex_hull(kuzmin) end)
-    |> Map.put("serial;perimeter", fn () -> Geometry.ConvexHull.ConvexHull.convex_hull(perimeter) end)
-    |> Map.put("parallel;p=#{p};uniform", fn () -> Geometry.ConvexHull.ConvexHull.Parallel.convex_hull(uniform) end)
-    |> Map.put("parallel;p=#{p};kuzmin", fn () -> Geometry.ConvexHull.ConvexHull.Parallel.convex_hull(kuzmin) end)
-    |> Map.put("parallel;p=#{p};perimeter", fn () -> Geometry.ConvexHull.ConvexHull.Parallel.convex_hull(perimeter) end)
+    |> Map.put("serial;uniform", fn () -> PBBS.Geometry.ConvexHull.Sequential.convex_hull(uniform) end)
+    |> Map.put("serial;kuzmin", fn () -> PBBS.Geometry.ConvexHull.Sequential.convex_hull(kuzmin) end)
+    |> Map.put("serial;perimeter", fn () -> PBBS.Geometry.ConvexHull.Sequential.convex_hull(perimeter) end)
+    |> Map.put("parallel;p=#{p};uniform", fn () -> PBBS.Geometry.ConvexHull.Parallel.convex_hull(uniform) end)
+    |> Map.put("parallel;p=#{p};kuzmin", fn () -> PBBS.Geometry.ConvexHull.Parallel.convex_hull(kuzmin) end)
+    |> Map.put("parallel;p=#{p};perimeter", fn () -> PBBS.Geometry.ConvexHull.Parallel.convex_hull(perimeter) end)
 
     Benchee.run(
       impl_map,
