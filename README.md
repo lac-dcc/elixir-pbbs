@@ -1,17 +1,8 @@
 # Problem-Based Benchmark Suite in Elixir
-### Course
-BSc in Computer Science - [Universidade Federal de Minas Gerais](https://ufmg.br/)
-### Professor 
-[Fernando Magno](https://homepages.dcc.ufmg.br/~fernando/)
-
-### Student
-Luiz Berto
 
 ## Goal
 
 Rewrite the [Problem-Based Benchmark Suite](https://www.cs.cmu.edu/~pbbs/benchmarks.html) in [Elixir](https://elixir-lang.org/).
-
-This work was started by [Jean George](https://github.com/jeangeorge) and continued by [Luiz Berto](https://github.com/luiz787).
 
 ## To run
 
