@@ -1,33 +1,30 @@
 # Description: https://www.cs.cmu.edu/~pbbs/benchmarks/integerSort.html
 
 defmodule PBBS.Sequences.IntegerSort.Parallel do
-
   def radix_sort(list, p) do
-    max = abs(Enum.max(list))
-    max_length = digits(max)
+    chunk_size = 20000
 
-    :ets.new(:IS, [:public, :named_table])
-    :ets.insert(:IS, {:data, list})
+    Stream.chunk_every(list, chunk_size)
+    |> Task.async_stream(
+      fn elements ->
+        max = abs(Enum.max(elements))
+        max_length = digits(max)
 
-    result =
-      0..(p - 1)
-      |> Enum.map(fn i ->
-        Task.async(fn ->
-          data = Keyword.get(:ets.lookup(:IS, :data), :data)
-
-          Enum.drop(data, i)
-          |> Enum.take_every(p)
-          |> Enum.map(fn item -> String.pad_leading(Integer.to_string(item), max_length, "0") end)
-          |> radix_sort(10, 0, max_length)
-          |> :lists.append()
-          |> Enum.map(fn item -> String.to_integer(item) end)
+        Enum.map(elements, fn item ->
+          # TODO stop using strings
+          String.pad_leading(Integer.to_string(item), max_length, "0")
         end)
-      end)
-      |> Task.await_many(:infinity)
-      |> :lists.merge()
-
-    :ets.delete(:IS)
-    result
+        |> radix_sort(10, 0, max_length)
+        |> :lists.append()
+        |> Enum.map(fn item -> String.to_integer(item) end)
+      end,
+      max_parallelism: p-1,
+      ordered: false,
+      timeout: :infinity
+    )
+    |> Stream.map(fn {:ok, v} -> v end)
+    |> Enum.to_list
+    |> :lists.merge()
   end
 
   def radix_sort(list, _, digit, rank) when digit == rank, do: [list]
@@ -60,5 +57,4 @@ defmodule PBBS.Sequences.IntegerSort.Parallel do
       1
     end
   end
-
 end
