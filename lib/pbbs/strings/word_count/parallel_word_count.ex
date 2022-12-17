@@ -1,27 +1,21 @@
 defmodule PBBS.Strings.WordCount.Parallel do
   def word_count(string, p) do
-    :ets.new(:wc, [:public, :named_table])
-    :ets.insert(:wc, {:data, string})
-    result = (0..p-1)
-    |> Enum.map(fn i ->
-      Task.async(fn ->
-        input = Keyword.get(:ets.lookup(:wc, :data), :data)
-        String.split(input, ~r/[^A-z]+/)
-        |> Enum.map(&String.downcase/1)
-        |> Enum.drop(i)
-        |> Enum.take_every(p)
-        |> Enum.frequencies
-        |> Enum.to_list
-      end)
-    end)
-    |> Task.await_many(:infinity)
-    |> :lists.append
-    |> Enum.reduce(%{}, fn (({k, v}), acc) ->
-      Map.update(acc, k, v, fn old -> old + v end)
-    end)
+    workload = 1000
 
-    :ets.delete(:wc)
+    String.splitter(string, :binary.compile_pattern([" ", "\n", "\t", "\f", "\r"]))
+    |> Stream.chunk_every(workload)
+    |> Task.async_stream(__MODULE__, :analyze, [], max_concurrency: p)
+    |> Stream.map(fn {:ok, v} -> v end)
+    |> Enum.reduce(%{}, fn elem, acc ->
+      Map.merge(elem, acc, fn _, a, b -> a + b end)
+    end)
+  end
 
-    result
+  def analyze(input) do
+    input
+    |> Enum.flat_map(fn s -> String.split(s, ~r/[^A-z]+/) end)
+    |> Enum.filter(fn s -> s != "" end)
+    |> Enum.map(&String.downcase/1)
+    |> Enum.frequencies()
   end
 end
