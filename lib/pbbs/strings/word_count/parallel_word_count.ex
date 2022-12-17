@@ -4,7 +4,7 @@ defmodule PBBS.Strings.WordCount.Parallel do
 
     String.splitter(string, :binary.compile_pattern([" ", "\n", "\t", "\f", "\r"]))
     |> Stream.chunk_every(workload)
-    |> Task.async_stream(__MODULE__, :analyze, [], max_concurrency: p)
+    |> Task.async_stream(__MODULE__, :analyze, [], max_concurrency: p, ordered: false)
     |> Stream.map(fn {:ok, v} -> v end)
     |> Enum.reduce(%{}, fn elem, acc ->
       Map.merge(elem, acc, fn _, a, b -> a + b end)
