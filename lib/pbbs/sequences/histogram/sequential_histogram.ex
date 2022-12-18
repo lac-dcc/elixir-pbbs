@@ -2,12 +2,9 @@ defmodule PBBS.Sequences.Histogram.Sequential do
   def histogram(nums, buckets) do
     map = Enum.frequencies(nums)
 
-    result = Tuple.duplicate(0, buckets)
-
-    result = Enum.reduce(map, result, fn {num, frequency}, acc ->
-      put_elem(acc, num, frequency)
+    Enum.map(0..buckets, fn bucket ->
+      Map.get(map, bucket, 0)
     end)
-
-    Tuple.to_list(result)
   end
+
 end
