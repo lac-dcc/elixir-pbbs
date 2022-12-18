@@ -9,8 +9,8 @@ defmodule Utils.Benchmark.Drivers.ComparisonSort do
     impl_map = Map.new()
     |> Map.put("serial;dense_list", fn () -> Enum.sort(dense_list) end)
     |> Map.put("serial;sparse_list", fn () -> Enum.sort(sparse_list) end)
-    |> Map.put("parallel;p=#{p};dense_list", fn () -> PBBS.Sequences.ComparisonSort.Parallel.sample_sort(256, dense_list) end)
-    |> Map.put("parallel;p=#{p};sparse_list", fn () -> PBBS.Sequences.ComparisonSort.Parallel.sample_sort(256, sparse_list) end)
+    |> Map.put("parallel;p=#{p};dense_list", fn () -> PBBS.Sequences.ComparisonSort.Parallel.merge_sort(dense_list, p) end)
+    |> Map.put("parallel;p=#{p};sparse_list", fn () -> PBBS.Sequences.ComparisonSort.Parallel.merge_sort(sparse_list, p) end)
     |> Map.new()
 
     Benchee.run(
