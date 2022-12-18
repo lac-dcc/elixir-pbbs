@@ -7,54 +7,42 @@ defmodule PBBS.Sequences.IntegerSort.Parallel do
     Stream.chunk_every(list, chunk_size)
     |> Task.async_stream(
       fn elements ->
-        max = abs(Enum.max(elements))
-        max_length = digits(max)
-
-        Enum.map(elements, fn item ->
-          # TODO stop using strings
-          String.pad_leading(Integer.to_string(item), max_length, "0")
-        end)
-        |> radix_sort(10, 0, max_length)
-        |> :lists.append()
-        |> Enum.map(fn item -> String.to_integer(item) end)
+        radix_sort_internal(elements)
       end,
-      max_parallelism: p-1,
+      max_parallelism: p - 1,
       ordered: false,
       timeout: :infinity
     )
     |> Stream.map(fn {:ok, v} -> v end)
-    |> Enum.to_list
+    |> Enum.reduce([], fn item, acc ->
+      [item | acc]
+    end)
     |> :lists.merge()
   end
 
-  def radix_sort(list, _, digit, rank) when digit == rank, do: [list]
+  def radix_sort_internal([], _), do: []
 
-  def radix_sort(list, base, digit, rank) do
+  def radix_sort_internal(list) do
+    max = abs(Enum.max_by(list, &abs(&1)))
+    sorted_list = radix_sort_internal(list, max, 1)
+
+    {negative, positive} = Enum.split_with(sorted_list, &(&1 < 0))
+    Enum.reverse(negative, positive)
+  end
+
+  defp radix_sort_internal(list, max, m) when max < m, do: list
+
+  defp radix_sort_internal(list, max, m) do
+    buckets = List.to_tuple(for _ <- 0..9, do: [])
+
     buckets =
-      get_buckets(list, base, digit)
-      |> Tuple.to_list()
-      |> Enum.filter(fn bucket -> bucket != [] end)
+      Enum.reduce(list, buckets, fn item, acc ->
+        index = abs(item) |> div(m) |> rem(10)
+        put_elem(acc, index, [item | elem(acc, index)])
+      end)
 
-    Enum.map(buckets, fn bucket ->
-      radix_sort(bucket, base, digit + 1, rank)
-      |> :lists.append()
-    end)
-  end
+    sorted_by_digit = Enum.reduce(9..0, [], fn i, acc -> Enum.reverse(elem(buckets, i), acc) end)
 
-  defp get_buckets(list, base, digit) do
-    empty_buckets = List.to_tuple(for _ <- 0..(base - 1), do: [])
-
-    Enum.reduce(list, empty_buckets, fn x, acc ->
-      i = String.to_integer(String.at(x, digit))
-      put_elem(acc, i, [x | elem(acc, i)])
-    end)
-  end
-
-  defp digits(num) do
-    if num > 9 do
-      1 + digits(div(num, 10))
-    else
-      1
-    end
+    radix_sort_internal(sorted_by_digit, max, m * 10)
   end
 end
