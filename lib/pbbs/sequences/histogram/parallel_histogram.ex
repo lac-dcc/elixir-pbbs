@@ -13,10 +13,7 @@ defmodule PBBS.Sequences.Histogram.Parallel do
       end)
     end)
 
-    result = List.duplicate(0, buckets)
-    |> Enum.with_index
-    |> Enum.map(fn ({k, v}) -> ({v, k}) end)
-    |> Map.new
+    result = Tuple.duplicate(0, buckets)
 
     map = Task.await_many(tasks)
     |> Enum.reduce(%{}, fn (res, acc) ->
@@ -25,8 +22,10 @@ defmodule PBBS.Sequences.Histogram.Parallel do
 
     :ets.delete(:histogram)
 
-    Map.merge(result, map)
-    |> Enum.to_list
-    |> Enum.map(fn ({_k, v}) -> v end)
+    result = Enum.reduce(map, result, fn {num, frequency}, acc ->
+      put_elem(acc, num, frequency)
+    end)
+
+    Tuple.to_list(result)
   end
 end
