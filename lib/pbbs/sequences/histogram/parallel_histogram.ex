@@ -1,7 +1,7 @@
 defmodule PBBS.Sequences.Histogram.Parallel do
 
   def histogram(nums, buckets, p) do
-    chunk_size = 200000
+    chunk_size = 20000
 
     map = Stream.chunk_every(nums, chunk_size)
     |> Task.async_stream(
