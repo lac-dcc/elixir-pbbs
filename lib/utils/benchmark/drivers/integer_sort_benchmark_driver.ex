@@ -13,8 +13,8 @@ defmodule Utils.Benchmark.Drivers.IntegerSort do
       ]
     end)
     |> Map.new()
-    |> Map.put("serial;dense_list", fn () -> Enum.sort(dense_list) end)
-    |> Map.put("serial;sparse_list", fn () -> Enum.sort(sparse_list) end)
+    |> Map.put("serial;dense_list", fn () -> PBBS.Sequences.IntegerSort.Sequential.radix_sort(dense_list) end)
+    |> Map.put("serial;sparse_list", fn () -> PBBS.Sequences.IntegerSort.Sequential.radix_sort(sparse_list) end)
 
     Benchee.run(
       impl_map,
