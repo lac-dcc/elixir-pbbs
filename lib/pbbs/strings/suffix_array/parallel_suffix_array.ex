@@ -3,9 +3,9 @@ defmodule PBBS.Strings.SuffixArray.Parallel do
     suffix_array(string, System.schedulers_online())
   end
 
-  def suffix_array(string, parallelism_degree) do
+  def suffix_array(string, p) do
     len = String.length(string)
-    size = div(len, parallelism_degree)
+    size = div(len, p)
     parts = 0..(len-1)//size
 
     tasks = Enum.map(parts, fn start ->

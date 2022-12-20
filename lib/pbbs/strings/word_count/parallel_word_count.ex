@@ -11,9 +11,8 @@ defmodule PBBS.Strings.WordCount.Parallel do
     end)
   end
 
-  def analyze(input) do
-    input
-    |> Enum.flat_map(fn s -> String.split(s, ~r/[^A-z]+/) end)
+  def word_count_internal(input) do
+    Enum.flat_map(input, fn s -> String.split(s, ~r/[^A-Za-z]+/) end)
     |> Enum.filter(fn s -> s != "" end)
     |> Enum.map(&String.downcase/1)
     |> Enum.frequencies()
